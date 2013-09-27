@@ -1,0 +1,5 @@
+REGEDIT4
+
+[HKEY_CURRENT_USER\Software\U.S. Robotics\Pilot Desktop\HotSync Manager]
+"Install31361"=dword:00000001
+"Install17561"=dword:00000001

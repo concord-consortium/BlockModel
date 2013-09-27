@@ -1,0 +1,28 @@
+whats new in version 1.1
+
+. Catalog 
+  . new method inspectRecord(byte buf[], int recPosition) - the cursor is not advanced, neither the current record position. this method must be used only for a fast way of viewing the contents of a record, like searching for a specific header or filling a grid of data.
+. keyboard 
+  . new "done" button
+  . corrected cursor disappearing on unpop
+. Control
+  . new constant FILL - fills the control to its parents width/height
+  . new method setRect(Rect r) - for shortcut.
+  . new method repaintNow() - paint the control immediately.
+  . new method setVisible(boolean visible) - shows or "hides" this control. the "hide" works setting the control's size to zero. unhidding restores the original size. the Window class setVisible does nothing. you can change the controls size when hided if you want.
+  . new method isVisible() - true if this control is "hided".
+  . new method onWindowPaintFinished() - called after the window has finished its paint.
+. Window
+  . new method setTitleFont - sets the font of the title. does not call repaint.
+  . the default font for the title now is BOLD.
+  . new public boolean flicker - if false, don't erases the background. use it carefully!
+  . new method getClientRect() - returns the client rect, ie, the rect minus the border and title area 
+. Font
+  . new method asBold - returns the current font with bold style.
+. Event 
+  . new constructor Event(int type, Object target, int timeStamp)
+. Rect
+  . new method translate(int deltaX, int deltaY) - translates this rect. the new positions will be this.x+deltaX,this.y+deltaY.
+  . new method Rect modifiedBy(int deltaX, int deltaY, int deltaW, int deltaH) - returns a new Rect modified in the specified parameters. you can use the constant SAME so the value is not modified.
+. Edit
+  . corrected bug of loosing focus.

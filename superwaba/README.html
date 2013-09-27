@@ -1,0 +1,220 @@
+<html>
+<head>
+<title>wabasoft - software development kit</title>
+</head>
+<body bgcolor=ffffff text=000000 link=090944 alink=FF0000 vlink=090944
+leftmargin=0 topmargin=0 marginwidth=0 marginheight=0>
+
+<!-- Copyright (c) 1999 Wabasoft -->
+<!-- All rights reserved. -->
+
+<!-- page table -->
+
+<table cellpadding=0 cellspacing=0 border=0 height=100%>
+
+<!-- [1] row 1, column 1 -->
+
+<tr><td bgcolor=#D4E0EA valign=top align=right width=109 height=31>
+  <a href="index.html">
+  <img src="doc/images/sbtop.gif" alt="wabasoft" width=109 height=31
+   align=right hspace=0 vspace=0 border=0></a>
+</td>
+
+<!-- [2] row 1, column 2 -->
+
+<td valign=top width=470 height=31>
+  <img src="doc/images/sdk.gif" alt="waba software development kit" width=470 height=31
+   hspace=0 vspace=0 border=0>
+</td>
+
+<!-- [3] row 1, column 3 -->
+
+<td width=100% rowspan=2 valign=top align=left>&nbsp;</td>
+
+<!-- [4] row 2, column 1 -->
+
+<tr><td bgcolor=#D4E0EA width=109 height=100% valign=top align=left>
+ <table cellpadding=6 cellspacing=4 border=0 valign=top>
+
+  <tr><td valign=top align=left>
+  <b><font face=Arial,Helvetica size=2>Reference</font></b><br>
+  <font face=Arial,Helvetica size=1><b>
+  <a href="doc\index.html">API Reference</a><br>
+  <a href="doc\sdk.html">SDK Programs</a><br>
+  </b></font>
+  </td></tr>
+
+  <tr><td valign=top align=left>
+  <b><font face=Arial,Helvetica size=2>General</font></b><br>
+  <font face=Arial,Helvetica size=1><b>
+  <a href="http://www.wabasoft.com/howto.html">How-to Papers</a><br>
+  <a href="http://www.wabasoft.com/spec.html">Specifications</a><br>
+  <a href="http://www.wabasoft.com">Wabasoft Home</a><br>
+  </b></font>
+  </td></tr>
+
+ </table>
+</td>
+
+<!-- [5] row 2, column 2 -->
+
+<td valign=top width=470>
+
+  <table cellpadding=4 cellspacing=4 border=0 valign=top>
+  <tr><td>
+    <font face=Verdana,Arial,Helvetica size=2>
+
+<p>
+<b>Waba Software Development Kit 1.0</b>
+<p>
+The WabaSDK allows you to develop Waba programs in conjunction with
+a Java Development Kit such as Sun's JDK or Microsoft's SDK for Java.
+<p>
+The resulting programs can run on devices containing a Waba
+Virtual Machine (WabaVM) and can run as a Java applet or application
+on any machine supporting Java. WabaVM's for this release are
+available for Windows CE and the PalmPilot.
+<p>
+<b>Changes from previous release</b>
+<ul>
+<li>removed Form dependencies under PalmOS
+<li>allow multiple PalmOS catalogs w/same creator
+<li>released source for bridge classes in SDK
+<li>various internal-only code changes
+</ul>
+This release is fully backwards compatible with the Beta 9 release.
+<p>
+The class reference for this release is available
+<a href="doc/index.html">here</a>.
+
+<!--
+A document explaining how to port Waba Beta 7 programs to the Beta 8 can be found
+<a href="http://www.wabasoft.com/howto_port7to8.html">here</a>.
+-->
+
+<p>
+<b>Instructions for using the SDK:</b>
+<p>
+<ol>
+<li>
+You need a Java Development Kit to use this SDK. This could be
+Sun's JDK, Microsoft's SDK for Java, Symantec's Visual Cafe, etc.
+<p>
+To create a Waba program, simply add the "classes" directory
+contained in this distribution to your CLASSPATH and write your
+program using the Waba classes.
+<p>
+Make sure not to use any language
+features that are not supported by Waba (exceptions, threads, longs
+or doubles) and reference only the Waba classes and the classes
+you create in your program.
+<p>
+Do not reference any of the classes that
+come as part of your JDK or your program will only run as a Java
+applet or application and not on devices that only contain a WabaVM.
+<p>
+Refer to the "doc" directory for the complete Waba API. To remain
+portable, the only classes you should use are those contained in
+the Waba API.
+<p>
+You start creating a Waba program by subclassing the MainWindow class.
+<p>
+The Scribble example program shows how to create a basic Waba
+program. The make.bat program contained in the Scribble directory
+shows how to build the program. Under Windows, you can simply execute
+"make" to build Scribble.
+<p>
+<li>
+The Scribble example also shows how to run your program as a Java applet.
+You can create a .html file, reference the waba.applet.Applet class in
+the .html file and pass your MainWindow's name as the appClass parameter.
+<p>
+Refer to the Scribble example's .html file for an example.
+<p>
+<li>
+To run your program on a PalmPilot or Windows CE device, a WabaVM must be
+installed on the device. WabaVM's are available from the download page of
+<a href="http://www.wabasoft.com">www.wabasoft.com</a>.
+<p>
+To install a Waba program on a PalmPilot, you will need to create .prc and .pdb
+files. The .prc file is the PalmPilot executable and the .pdb file is
+the PalmPilot database containing the class files for the program.
+<p>
+For Windows CE devices, you need to create .lnk and
+.wrp files. The .lnk file is the Windows CE launch program and the .wrp
+file contains the class files for the program.
+<p>
+You use the "exegen" program to generate .prc and .lnk files and the "warp" 
+program to generate .pdb and .wrp files.
+<p>
+These programs are located in the "bin" directory and only run under Windows 95
+and Windows NT. You can develop your program on any machine with a JDK but
+you need to create the warp (.pdb and .wrp) and launch executables (.prc and
+.lnk) on a Windows machine.
+<p>
+There are versions of these programs for other 
+platforms, see the
+<a href="http://www.wabasoft.com/top10.html">Top 10</a>
+list on Wabasoft's web site for the other versions.
+<p>
+A more detailed explanation of how to use the exegen and warp programs to
+generate these files is contained on Wabasoft's web site on the
+<a href="http://www.wabasoft.com/howto_write.html">Writing a Simple Program</a>
+page.
+<p>
+<li>
+To install your program on a PalmPilot, simply install the .pdb and .prc
+files for the program.
+<p>
+To install your program under Windows CE, simply install the .lnk and .wrp files.
+<p>
+Under Windows CE, you will need to install the .wrp file in the directory that
+was specified when the .lnk shortcut file was created with exegen.
+</ol>
+<p>
+<b>Examples</b>
+<p>
+This SDK contains a few example programs:
+<ul>
+<li> <b>AddrScan</b> <br> scans through the Address book of a PalmPilot
+<li> <b>Controls</b> <br> displays some of the user-interface controls
+<li> <b>CoreTest</b> <br> displays some of the core graphic functionality
+<li> <b>ImageSplit</b> <br> example of image loading and manipulation
+<li> <b>PocketWatch</b> <br> displays a running pocket watch
+<li> <b>Scribble</b> <br> lets a user draw on the screen
+<li> <b>Web</b> <br> displays the text of a web page - requires an Internet connection
+</ul>
+<p>
+<b>License</b>
+<p>
+Copyright (c) 2000 Wabasoft. 
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+<p>
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+license.txt file containing the GNU General Public License for more details.
+<p>
+<b>Trademark Notice</b>
+<p>
+Java and JDK are trademarks of Sun Microsystems. PalmPilot is a trademark
+of 3Com. Microsoft, Windows NT, Windows 95 and Windows CE are trademarks of Microsoft Corporation.
+<p>
+Waba, WabaVM and WabaSDK are trademarks of Wabasoft Corporation.
+
+  <hr>
+  <font face=Verdana,Arial,Helvetica size=1>
+  Copyright (c) 1999 Wabasoft. Waba, WabaVM and WabaSDK are trademarks of
+  Wabasoft Inc.
+  </td></tr>
+  </table>
+</td>
+
+<!-- end page table -->
+</table>
+
+</body>
+</html>

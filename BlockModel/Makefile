@@ -5,6 +5,7 @@ DEP_NAMES = wgraph ProbeSystem
 PM_CLASSES= JavaProbeManager.class ProbeManager.class ProbeInfo.class
 EXT_CLASSES= $(PM_CLASSES:%=$(PROBESYS_DIR)/%)
 EXT_FILES= source/trash.bmp
+EXT_FILES_NO_DIRECTORY= trash.bmp
 MW_CLASS= BlockModel
 
 include ../ReleaseSystem/waba.inc

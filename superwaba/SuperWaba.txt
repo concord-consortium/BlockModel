@@ -1,0 +1,43 @@
+HI SUPERWABA FELLOWS!
+
+   this is the first version of SuperWaba as a complete package
+   for use in most handheld devices.
+
+   use it carefully. please report bugs and different behaviour
+   between all ports!
+
+   since people are waiting, the documentation will be left to do after
+   the release.
+
+   i decided to send my hole waba directory, including my VisualCafe
+   projects thats compiles the classes, the project to use in CodeWarrior
+   for building the vm, some usefull files, like callhotsync.reg, that
+   tells hotsync to install files in the next cradle button press, my
+   make.bat file that builds the vm classes, a class named MethodsHash,
+   that computes the hash code for creating native methods in the vm,
+   among others. to look at them, you must search the directory structure.
+
+   i hope that you will join us in helping the SuperWaba vm improve as 
+   my friend Dave Slaughter did, in adding the support for appletviewer,
+   windows CE and pocket PC.
+
+   here are the modifications i remember that are added to the vms:
+
+   . new class waba.util.Hashtable - acts like a hashtable, but uses
+     strings as keys (instead of Objects)
+   . appletviewer now reads and writes directly to pdb files, so you can
+     easily debug your databases on a PC.
+   . appletviewer correctly handles international chars.
+   . appletviewer uses the f1-f10 keys to emulate the palm buttons
+   . waba.lang.string now has a hashCode method
+
+   keep looking at www.superwaba.org! and please don't hesitate
+   to write docs and to help people at the pilot.programmer.waba
+   newsgroup!
+
+   enjoy!
+
+        guich
+           and
+        Dave
+        

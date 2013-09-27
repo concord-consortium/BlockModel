@@ -11,7 +11,7 @@ CLASSES= ProbeSystem.java ProbeManager.java ManagerWorker.java \
 	TBProbeManager.java
 
 main: classes
-	javac -d classes -O $(CLASSES:%=source/%)
+	javac -target 1.1 -source 1.3 -classpath ../owapi_1_10/lib/OneWireAPI.jar -d classes -O $(CLASSES:%=source/%)
 
 classes:
 	-mkdir $@

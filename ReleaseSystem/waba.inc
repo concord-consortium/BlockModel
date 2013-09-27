@@ -4,8 +4,8 @@
 # JAR_EXTRAS
 # JAR_NAME
 
-WABA_DIR= /home/scytacki/waba/superwaba/vmsrc/classes_java
-WEXTRAS_DIR= /home/scytacki/waba/superwaba/wextras/classes
+WABA_DIR= $(CURDIR)/../superwaba/vmsrc/classes_java
+WEXTRAS_DIR= $(CURDIR)/../wextra/classes
 CLASSES_DIR= classes
 BIN_DIR= bin
 JAR_NAME= $(MW_CLASS).jar
@@ -26,7 +26,7 @@ main: $(CLASSES_DIR)
 ifneq ($(EXT_CLASSES),)
 	cp  $(EXT_CLASSES) $(CLASSES_DIR)
 endif
-	javac -d $(CLASSES_DIR) -O $(CLASSES:%=source/%)
+	javac -source 1.3 -target 1.1 -d $(CLASSES_DIR) -O $(CLASSES:%=source/%)
 ifneq ($(EXT_FILES),)
 	cp $(EXT_FILES) $(CLASSES_DIR)
 endif
@@ -42,7 +42,7 @@ exegen:
 
 
 jar: $(BIN_DIR) main
-	cd $(CLASSES_DIR); jar c0vf ../$(BIN_DIR)/$(MW_CLASS).jar $(EXT_FILES) *.class -C $(WABA_DIR) waba $(JAR_EXTRAS)
+	cd $(CLASSES_DIR); jar c0vf ../$(BIN_DIR)/$(MW_CLASS).jar $(EXT_FILES_NO_DIRECTORY) *.class -C $(WABA_DIR) waba $(JAR_EXTRAS)
 
 ftp: get-clients
 	@echo $(shell cat clients)
