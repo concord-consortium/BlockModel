@@ -1,0 +1,2 @@
+class CmdErrorException extends Exception{}
+    
