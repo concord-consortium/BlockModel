@@ -144,7 +144,6 @@ public class ModelPage extends Container
     public void onPaint(Graphics g)
     {
 	tp.updateObj();
-	System.out.println("Got onPaint");
     }
   
     public void onEvent(Event e)
