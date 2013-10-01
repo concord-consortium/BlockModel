@@ -1,0 +1,131 @@
+API_Diffs.txt (DC, 09.14.01)
+
+-=---------------=-
+TINI Firmware 1.02c
+-=---------------=-
+--------------------------------------------------------------------
+Go to http://www.ibutton.com/TINI/book.html for an online version of 
+"The TINI Specification and Developer's Guide".
+--------------------------------------------------------------------
+
+This file documents the differences between the TINI API and Sun's 1.1 JDK.
+If a method or class is listed under the packages below, that means it exists
+in Sun's JDK 1.1 but not in the current TINI API.
+
+Packages supported
+-================-
+    o java.io
+    o java.lang
+    o java.lang.reflect
+    o java.net
+    o java.util
+    o javax.comm
+
+!!! PACKAGES NOT LISTED ABOVE ARE NOT IMPLEMENTED ON TINI !!!
+
+Package: java.io
+-==============-
+
+     interface Externalizable
+     public class InvalidClassException
+     public class InvalidObjectException
+     public class NotActiveException
+     public class NotSerializableException
+     interface ObjectInput
+     public class ObjectInputStream
+     interface ObjectInputValidation
+     interface ObjectOutput
+     public class ObjectOutputStream
+     public class ObjectStreamClass
+     interface ObjectStreamConstants
+     public abstract class ObjectStreamException
+     public class OptionalDataException
+     public class StreamCorruptedException
+     public class WriteAbortedException
+
+
+Package: java.lang
+-================-
+
+     In Object:
+          - finalize code can be invoked directly, but is not
+            automatically invoked before reclaimation of object.
+
+     From java.lang.reflect:
+          public final class Array
+          public final class Constructor
+          public final class Field
+          public class InvocationTargetException
+          interface Member
+          public final class Method
+
+     public class AbstractMethodError
+
+     From Class:
+          public java.lang.ClassLoader getClassLoader() 
+          public java.lang.reflect.Constructor getConstructor(java.lang.
+          public java.lang.reflect.Constructor[] getConstructors() throw
+          public java.lang.reflect.Constructor getDeclaredConstructor(ja
+          public java.lang.reflect.Constructor[] getDeclaredConstructors
+          public java.lang.reflect.Field getDeclaredField(java.lang.Stri
+          public java.lang.reflect.Field[] getDeclaredFields() throws ja
+          public java.lang.reflect.Method getDeclaredMethod(java.lang.St
+          public java.lang.reflect.Method[] getDeclaredMethods() throws 
+          public java.lang.reflect.Field getField(java.lang.String) thro
+          public java.lang.reflect.Field[] getFields() throws java.lang.
+          public java.lang.reflect.Method getMethod(java.lang.String, ja
+          public java.lang.reflect.Method[] getMethods() throws java.lan
+          public java.net.URL getResource(java.lang.String) 
+          public java.io.InputStream getResourceAsStream(java.lang.Strin
+          public java.lang.Object[] getSigners() 
+
+     public abstract class ClassLoader
+     public final class Compiler
+
+     From Math:
+          public static double acos(double) 
+          public static double asin(double) 
+          public static double atan(double) 
+          public static double atan2(double, double) 
+          public static double cos(double) 
+          public static double exp(double) 
+          public static double IEEEremainder(double, double) 
+          public static double pow(double, double) 
+          public static double sin(double) 
+          public static double tan(double) 
+
+     public class NoSuchFieldError
+     public class NoSuchFieldException
+     public class NoSuchMethodException
+
+     From String:
+          String.intern() will return incorrect results.
+
+     From System:
+          public static void runFinalization() 
+          public static void runFinalizersOnExit(boolean) 
+
+     public class VerifyError
+
+
+Package: java.net
+-===============-
+
+     N/A
+
+
+Package: java.util
+-================-
+
+     From GregorianCalendar:
+          public static void roll(int, boolean) 
+          public static void add(int, int) 
+
+
+Package: javax.comm
+-================-
+
+     N/A
+
+
+-================-

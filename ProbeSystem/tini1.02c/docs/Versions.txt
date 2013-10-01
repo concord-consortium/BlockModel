@@ -1,0 +1,54 @@
+Versions.txt (DC, 09.14.01)
+
+-=---------------=-
+TINI Firmware 1.02c
+-=---------------=-
+--------------------------------------------------------------------
+Go to http://www.ibutton.com/TINI/book.html for an online version of 
+"The TINI Specification and Developer's Guide".
+--------------------------------------------------------------------
+
+-==============================================================================-
+NOTE: Some versions may contain minor build numbers that are not included in 
+      this file. Only significant version information is included here.
+-==============================================================================-
+NOTE: TINI O.S. and slush versions have the following format
+      M.mq where
+      M is the major version (1,2,3,...),
+      m is the minor version (0,01,02,...,1,11,...) and
+      q is an *optional* qualifier of the form
+        pn (p represents "preview release" and n is a number (p1,p2,p3,...) or
+        a (a is an alphabetical character indicating a "maintenance release" 
+          (b,c,d,...).
+
+      Examples:
+        1.02p3 - version 1.02, preview release 3.
+        1.02   - version 1.02, release.
+        1.02b  - version 1.02, maintenance release b.
+
+      The relative order of releases from newest is 
+      (Newest > Newer > ... > Older > Oldest):
+
+      ... > 1.02c > 1.02b > 1.02 > 1.02p3 > ...
+-==============================================================================-
+
+TINI Firmware
+-===========-
+TINI Loader     - 05-15-00 - banner
+TINI O.S.       - 1.02c    - boot banner, second line
+TINI API        - 800B     - tini.db, first line
+                           - also output from TINIConvertor on 
+                             "Using ROM API Version" line
+slush           - 1.02c    - session banner
+
+Java Tools
+-========-
+JavaKit         - 2.2.2  - help/about
+TINIConvertor   - 0.75   - banner, second line
+BuildDependency - 1.05   - banner, second line
+
+Native Library Tools
+-==================-
+a390          - 0.112  - banner
+macro         - 0.222  - banner
+BuildA51      - 0.111  - banner 

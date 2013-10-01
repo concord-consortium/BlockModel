@@ -1,0 +1,74 @@
+Serial_Capabilities.txt (DC, 09.14.01)
+
+-=---------------=-
+TINI Firmware 1.02c
+-=---------------=-
+--------------------------------------------------------------------
+Go to http://www.ibutton.com/TINI/book.html for an online version of 
+"The TINI Specification and Developer's Guide".
+--------------------------------------------------------------------
+
+This file contains documentation on the serial communications capabilities 
+of the TINI firmware and hardware.  TINI has two UARTs(serial port) on the 
+DS80C390 processor and has the ability to also communicate with a 16550 
+compatible UART.
+
+-==========-
+
+1) Hardware
+2) Supported Modes
+3) Testing
+
+Hardware
+-======-
+
+TINI is designed to support a total of four serial ports. The DS80C390 
+processor has two built in UARTs.  These two UARTs will be referred to as 
+the internal serial ports. TINI also supports communication with a 16550 
+compatible UART. This will be referred to as the external serial ports. 
+The driver for the external serial ports only supports addresses in CE
+address space (Addresses using PCE signals are not supported).  
+
+The internal serial ports now have support for hardware flow control and 
+also support software flow control. TINI Rev. D or greater is required for
+hardware flow control along with a socket board that supports this feature
+such as TINI Socket E-series Rev. C or greater. 
+
+The external serial ports have hardware flow control but no software flow 
+control. These ports now make full use of their FIFOS which reduces CPU
+load while streaming data.
+
+See API_Changes.txt for newly supported javax.comm methods. 
+
+Supported Modes
+-=============-
+
+The following baud rates are supported by the internal/external serial ports.
+
+serial0/2/3 support baud rates of 300, 600, 1200, 2400, 4800, 9600, 19200, 
+38400, 57600, 115200.  serial1 supports the same baud rates with the 
+exception of 300, 600 and 1200. 
+
+Internal serial0/1 support 7 or 8 bit characters. Even, odd or no-parity bit 
+generation and detection.  With 8 databits, 1 stop bit is supported, with 
+7 databits 2 stop bits are supported for no parity, and with 7 databits 
+1 stop bit is supported with parity. 
+
+External serial2/3 support 5,6,7 or 8 bit characters with 1, 1.5, or 2 stop 
+bit generation. Refer to the National Semiconductor PC16552D data sheet for 
+the external serial port modes. 
+
+Testing
+-=====-
+
+Testing has been performed on all serial ports.  The primary testing has been 
+done using a program that translates serial data to ethernet.  This testing 
+has been performed using a baud rate of 115200 and transmitting all serial 
+data received to a host computer which verifies that the serial data sent 
+matches the ethernet data recieved.  Both serial0 and serial1 have been 
+tested to 800,000,000 bytes successfully without flow control.  The external 
+serial ports have been tested using hardware flow control at 115200.  The 
+external serial ports can continuously sustain up to 38400 baud without flow 
+control.
+
+-==========-

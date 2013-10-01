@@ -1,0 +1,9 @@
+com.dalsemi.onewire
+com.dalsemi.onewire.adapter
+com.dalsemi.onewire.application.sha
+com.dalsemi.onewire.application.tag
+com.dalsemi.onewire.container
+com.dalsemi.onewire.jib
+com.dalsemi.onewire.jib.service
+com.dalsemi.onewire.jib.terminal
+com.dalsemi.onewire.utils

@@ -1,0 +1,360 @@
+Native_Methods.txt (DC, 09.14.01)
+
+-=---------------=-
+TINI Firmware 1.02c
+-=---------------=-
+--------------------------------------------------------------------
+Go to http://www.ibutton.com/TINI/book.html for an online version of 
+"The TINI Specification and Developer's Guide".
+--------------------------------------------------------------------
+
+New
+-=-
+  - Many new functions have been added to TINI's native API. These functions
+    have the phrase "New for 1.02" in the Notes section of the function
+    description in Native_API.txt. See "Sleeping in Native Methods" section 
+    below for useful information on using the exported thread sleep functions.
+  - Native libraries can now be attached to application binary (.tbin or .tini) 
+    files.
+  - loadLibrary now includes the error code, returned by a 
+    Library Initialization Function, in the UnsatisfiedLinkError message String.
+  - Indirect registers, starting at SYSTEM_INDIRECT_START, are now available
+    for use by native libraries. See Native_API.txt for new functions available
+    for acquiring ownership of these indirects.
+
+Disclaimer
+-========-
+  - TINI's Native Interface is supported in *ASSEMBLY LANGUAGE ONLY* using
+    the a390 assembler included with this distribution.
+  - The TINI Native Interface is very simple. The interface goes only one
+    way - From Java To Native. Callbacks are *NOT* supported. This is an
+    early release of the native library interface. Consider it BETA. 
+    The source for the tools has been included and you are free to modify 
+    them to suit you own needs. Please remember that there are nearly an
+    infinite number of ways to crash the system in assembly language so please 
+    be absolutely sure you have debugged your library to the very best of 
+    your abilities and beyond before assuming there is a bug in the TINI 
+    firmware. Simple System.out.println's before and after loadLibrary and 
+    native method calls will isolate the problem call. A debug firmware 
+    release provides debug output on TINI's Diagnostic port. A handful of 
+    debug routines have been exported.
+    The documentation is sparse at this time and we appologize. We will
+    provide more documentation as soon as it is humanly possible.
+    We've given you the gun and the bullets. Be careful where you point
+    it... and enjoy!
+  - Contact Kevin Self (kevin.self@dalsemi.com) for the latest errata sheet on 
+    the 80C390 processor to avoid stumbling over any known processor bugs.
+
+Native library (.tlib) files
+-==========================-
+  Native libraries can be loaded into TINI's file system or (in 1.02 or higher) 
+  they can be attached to the application binary (.tbin,.tini). The 
+  loadLibrary(String libname) method first attempts to find the library (.tlib)
+  in the filesystem and then, on failure, looks within the application binary
+  (.tbin,.tini) itself. This search algorithm allows a library to be updated 
+  without reloading the application file by loading a new library file into the
+  filesystem. To attach a native library to an application use the "-n" switch
+  in TINIConvertor. 
+
+  Example: 
+    java TINIConvertor -n example1.tlib -f Example1.class -d tini.db -o Example1.tini
+
+Five Steps Required to Build a Native Library
+-===========================================-
+  Library File in TINI's Filesystem
+  ---------------------------------
+    1) Write the native library code.
+       This code MUST contain an init function and at least one native
+       method.
+    2) Assemble the code.
+       <filename>.<ext> -> macro => <filename>.mpp -> a390 => <filename>.tlib
+    3) FTP the tlib file to TINI.
+    4) Use loadLibrary in your Java application to load your native library.
+    5) Execute your application.
+
+  Library File in Application Binary
+  ----------------------------------
+    1) Write the native library code.
+       This code MUST contain an init function and at least one native
+       method.
+    2) Assemble the code.
+       <filename>.<ext> -> macro => <filename>.mpp -> a390 => <filename>.tlib
+    3) Attach the library to your application using TINIConvertor. Use the 
+       "-n <libraryName>" switch to specify the location of the native library.
+    4) Use loadLibrary in your Java application to load your native library.
+    5) Execute your application.
+
+Tools
+-===-
+  macro - Macro preprocessor that takes an assembly language source file and 
+          converts equates to numeric values and macros to inline code. The
+          macro preprocessor is single pass. This means that equates and macros
+          must be declared before they are used. The output of the preprocessor
+          is a file with a .mpp extension. Macro is case insensative.
+  a390 -  Assembler that takes a .mpp file (or assembly source if no equates
+          or macros are used) and produces a tlib (relocatable tini library)
+          file, or optionally a non-relocatable tbin or extended hex file.
+          The assembler is multi pass. The assembler does not open "include"
+          files. Include files are processed by "macro" and may only contain
+          equates, macros and DB statements. All relevant information, 
+          including DB statements, is placed into the .mpp file. A390 is
+          case insensative.
+  BuildA51 - Build utility that reads an extremely simple Makefile and runs
+             macro and a390 on files listed in the Makefile based on 
+             dependancies and file times. BuildA51 concatenates all of
+             the .mpp files generated by macro into a single assembly
+             source file (glob.a51 by default). a390 is then run on the
+             concatenated file.
+  TINIConvertor - Application convertor which can be used to attach a native
+                  library to an application binary.
+  
+  Binaries for macro and a390 are provided for Win32, Linux x86 and Solaris
+  Sparc.
+
+  BuildA51 is not required to build a native library.
+  Here is a simple script that can be used to assemble a simple source file:
+  UN*X:
+    macro $1.a51
+    a390 -l $1.mpp
+
+  Windows:
+    macro %1.a51
+    a390 -l %1.mpp
+  
+Equates
+-=====-
+  Equates are of the form:
+   <Identifier> EQU <expression>
+    where expression can be a value (e.g. 0a0h, 160 or 10100000b) or
+    a compound expression (e.g. EQUATE_2 EQU (EQUATE_1 + 1) assuming 
+    EQUATE_1 has already been defined. Compound expressions are NOT 
+    allowed in macros.
+
+Macros
+-====-
+  Macros are of the form:
+    <Identifier> MACRO [PARAM <param1> [<param2> [...<paramn>]]]
+      [LOCAL <local1>[, <local2>[...,<localm>]]]
+      [statement 1]
+      [statement 2]
+      ...
+      [statement s]
+    ENDM
+
+  Macros may be nested but inner macros may NOT have parameters.
+  A statment that uses a macro is of the form:
+   <Identifier>[,<parameter1>[,<parameter2>[...,<parametern>]]]
+
+Source Files
+-==========-
+  Source files are of the form:
+    [<Include files>]
+    [<Equates>]
+    [<Macros>]
+    [<Statements>]
+  END
+
+Makefile
+-======-
+  Make files are of the form:
+  <source file 1> [<dependancy 1a> [<dependancy 1b> ... [<dependancy 1n>]]]
+  ...
+  <source file m> [<dependancy ma> [<dependancy mb> ... [<dependancy mn>]]]
+
+Exported Functions and Exceptions
+-===============================-
+  Firmware revision specific:
+    tini.inc contains all functions that are exported by the system.
+  API revision specific:
+    apiequ.inc contains exception and class numbers.
+  General:
+    ds80c390.inc contains 390 register equates.
+    tinimacro.inc contains useful macros.
+
+Restrictions
+-==========-
+  - No ACalls or AJmps -> a module can span segments.
+  - The module must be contiguous. No ORG statements
+    allowed. The module offsets automatically start
+    at zero.
+  - There are absolutely no directs that persist
+    across method calls. Certain ranges of directs are
+    reserved for global system variables. You can be
+    process swapped at any time. Touch them and you
+    will scrog the system!!!
+    At the time this was written this includes 
+    20h-21h and 68h and above.
+    All other directs MUST be returned to the
+    state that they were in before the method was called.
+  - Indirects are reserved for system use only, with the exception
+    of SYSTEM_MAX_INDIRECT indirects starting at SYSTEM_INDIRECT_START.
+    See Native_API.txt for information on acquiring ownership of these
+    indirects.
+  - Register banks 0, 1 and 3 are free for library use.
+    Register bank 2 can only be used after method
+    parameters are removed from the Java stack. Both DPTRs 
+    are free to be used by native libraries along with ACC,
+    B and PSW. By "free to use" we mean you do not need to
+    preserve the original contents.
+  - The file tini.inc contains the addresses of all
+    exported systems functions. These are static linkages
+    that are tied to a specific firmware release. Your
+    module MUST be reassembled for other firmware revisions.
+  - The file apiequ.inc contains the numbers that represent
+    exceptions and class numbers. These are static linkages
+    tied to a specific firmware release. Your module MUST
+    be reassembled with this file for each release.
+  - Threads in native methods are not automatically
+    swapped by the thread scheduler. You must return from your native 
+    method to allow the thread scheduler to continue swapping threads OR
+    you can sleep the thread from your native method (see the "Sleeping in 
+    Native Methods" section of this document for information related to 
+    sleeping from a native method).
+  - Currently native libraries are restricted to 64k in size. Multiple native
+    libraries can be loaded to overcome this restriction.
+  - We reserve the right to change these rules main future
+    releases.
+
+Library Initialization Function
+-=============================-
+  All native libraries MUST contain an initialization function. This
+  Function MUST be located at offset zero into the file. An initialization
+  function should return with ACC set to zero on success. This function
+  is called during the execution of the loadLibrary method. loadLibrary
+  will throw an UnsatisfiedLinkError if ACC is not zero on return from the
+  initialization function.
+
+Native Library Helper Functions
+-=============================-
+  These functions are useful in extracting parameters off of the Java Stack.
+  All of these functions take the parameter number (starting at zero from left 
+  to right - virtual functions have an implicit "this" reference in position
+  zero) in ACC. 
+
+    NatLib_LoadJavaByteArray - extracts a reference off of the Java Stack, 
+        loads DPX:DPH:DPL with the address of the first data element in the 
+        array and loads R3:R2:R1:R0 with the array length. ACC contains zero 
+        if this operation is successful or an exception number on failure.
+
+    NatLib_LoadPointer - extracts a reference off of the Java Stack and loads
+        DPX:DPH:DPL with the address of this object. ACC contains zero if this 
+        operation is successful or an exception number on failure.
+
+    NatLib_LoadPrimitive - extracts a standard width parameter off of the Java
+        Stack and stores the value in R3:R2:R1:R0.
+
+    NatLib_LoadWidePrimitive - extracts a wide parameter (long or double) off
+        of the Java Stack and stores the result in R7:R6:R5:R4:R3:R2:R1:R0.
+
+  All results store LSB in R0.
+
+Return Values
+-===========-
+  ACC must be zero if an operation is successful. If ACC is non-zero its value
+  will be interpreted as an exception code by the VM (see apiequ.inc).
+
+  Standard width return values should be placed in R3:R2:R1:R0.
+ 
+  Wide return values should be placed in R7:R6:R5:R4:R3:R2:R1:R0.
+
+  R0 is the LSB.
+
+Library State Blocks
+-==================-
+  In order to store information across native calls, we have provided two
+  types of state blocks. 
+  - Ephemeral State Blocks (ESB) store references to memory malloc-ed by the
+    library between reboots. ESBs are reclaimed by the system on reboot.
+  - Immutable State Blocks (ISB) store references to memory malloc-ed by the
+    library across reboots. Memory inserted into an ISB is marked as persistant
+    by the system. This memory must be explicitly freed by the native library.
+  - State blocks are accessed by passing a pointer to an 8 byte identifier
+    to the state block function in the first DPTR.
+
+  - Indirect registers can also be used to store data across native calls 
+    (1.02 or later) but these registers are limited in number and are available
+    on a first-come, first-serve basis. Access to indirect registers is much
+    faster than access to state blocks.
+
+  See Native API documentation for details on all exported functions.
+
+Naming conventions
+-================-
+  Native methods declared in your Java source code correspond to a library
+  function with the same name with a "Native_" prefix prepended. Polymorphism
+  is not allowed with native methods since the signature of the native method
+  is not maintained. Polymorphism can be achieved by wrapping a native method
+  call with Java methods.
+
+  Example:
+
+  public static native int myMethod1
+
+  requires the matching native library function
+
+  Native_MyMethod1:  ; this name is case insensative
+  ...
+  ret
+
+  No name is required for the library initialization function. It is accessed
+  based only on its position within the file.
+
+  Please look at the Example1 example in the \examples\NativeLibrary\src 
+  directory.
+
+Sleeping in Native Methods
+-========================-
+  The following sequence of events must be executed in order
+  to sleep from a native method.
+
+  1) Save Java state. This only needs to be done one time
+     per native method invokation. The native method
+     can sleep and resume any number of times after the 
+     Java state has been saved. 
+     -------------------------------------------------------
+     ---------- Repeat as many times as necessary ----------
+     -------------------------------------------------------
+  2) Push *any* and *all* registers that need to be preserved
+     *across* the sleep.
+  3) Call System_ThreadSleep with desired timeout and 
+     with accumulator cleared.
+  4) Pop all registers that were pushed before the sleep.
+     -------------------------------------------------------
+     -------------------------------------------------------
+  5) Restore Java state before returning to the Java
+     application.
+
+  Example:
+  ;*******************************************************
+  Native_MySleepingMethod:
+    lcall System_SaveJavaThreadState  ; save Java state
+
+    mov R0, #0e8h                     ; sleep 1 second
+    mov R1, #3                        ; 
+    mov R2, #0                        ;
+    mov R3, #0                        ;
+   
+  MySleepingMethod_ReadyToSleep:
+    push R0_B0                        ; save timeout regs
+    push R1_B0                        ;
+    push R2_B0                        ;
+    push R3_B0                        ;
+    ; ... push any other regs we use 
+    clr A                             ; sleep, not suspend
+    lcall System_ThreadSleep          ; go to sleep
+    ; ... pop any other regs we pushed
+    pop R3_B0                         ; restore timeout regs
+    pop R2_B0                         ;
+    pop R1_B0                         ;
+    pop R0_B0                         ;
+    lcall MyCheckForDoneFunction      ; are we ready to return yet?
+    jnz MySleepingMethod_ReadyToSleep ;
+
+  MySleepingMethod_Done:
+    lcall System_RestoreJavaThreadState ; restore Java state
+    clr A                             ; no error 
+    ret  
+  ;*******************************************************
+
+-==============-
+

@@ -1,0 +1,19 @@
+Known_Bugs.txt (DC, 09.14.01)
+
+-=---------------=-
+TINI Firmware 1.02c
+-=---------------=-
+--------------------------------------------------------------------
+Go to http://www.ibutton.com/TINI/book.html for an online version of 
+"The TINI Specification and Developer's Guide".
+--------------------------------------------------------------------
+
+This file contains a list of bugs that were known at the time of this release.
+
+- If a ServerSocket is closed it can not be reopened (on the same port) until 
+  all TCP connections on the ServerSocket's port have been closed.
+- If the OutputStream associated with an external serial port (serial2,serial3)
+  is closed before closing the serial port itself the serial port may stall 
+  after transmitting a dozen or so bytes the next time it is opened. 
+  WORKAROUND: Do not close the serial port OutputStream. The stream will be 
+              closed correctly when the port is closed.

@@ -1,0 +1,210 @@
+License.txt (DC, 09.14.01)
+
+-=---------------=-
+TINI Firmware 1.02c
+-=---------------=-
+--------------------------------------------------------------------
+Go to http://www.ibutton.com/TINI/book.html for an online version of 
+"The TINI Specification and Developer's Guide".
+--------------------------------------------------------------------
+
+
+                              Dallas Semiconductor
+                  Standard Software End-User License Agreement
+
+NOTE: THIS IS A LEGAL AGREEMENT BETWEEN DALLAS SEMICONDUCTOR CORPORATION
+("DALLAS") AND YOU (EITHER AN INDIVIDUAL OR SINGLE ENTITY) FOR THE SOFTWARE
+PRODUCTS WHICH FOLLOW (COLLECTIVELY THE "SOFTWARE PRODUCT"). PLEASE READ THIS
+DOCUMENT and any provided supplemental license terms (COLLECTIVELY THE
+"AGREEMENT") CAREFULLY. IF YOU DO NOT DO NOT AGREE, CLICK DISAGREE.
+
+BY OPENING THE SOFTWARE MEDIA PACKAGE, YOU AGREE TO THE TERMS OF THIS
+AGREEMENT. IF YOU ARE ACCESSING THE SOFTWARE ELECTRONICALLY, INDICATE YOUR
+ACCEPTANCE OF THESE TERMS BY SELECTING THE "AGREE" BUTTON AT THE END OF THIS
+AGREEMENT. IF YOU DO NOT AGREE TO ALL OF THESE TERMS, PROMPLY RETURN THE UNUSED
+SOFTWARE TO YOUR PLACE OF PURCHASE FOR A REFUND OR, IF THE SOFTWARE IS ACCESSED
+ELECTRONICALLY, SELECT THE "DISAGREE" BUTTON AT THE END OF THIS AGREEMENT.
+
+  1. GRANT OF LICENSE. This Agreement grants you the following rights: You may
+     install, use, access, display, run or otherwise interact with ("RUN") one
+     copy of the SOFTWARE PRODUCT, on a single computer, workstation, terminal
+     or other digital electronic device ("COMPUTER"). All rights not expressly
+     granted are reserved by DALLAS.
+
+  2. RESTRICTIONS. Title to the SOFTWARE PRODUCT and all associated
+     intellectual property rights are retained by DALLAS and/or its licensors.
+     You may not resell, or otherwise transfer for value, the SOFTWARE PRODUCT.
+     You may not reverse engineer, decompile, or disassemble the SOFTWARE
+     PRODUCT, except and only to the extent that such activity is expressly
+     permitted by applicable law notwithstanding this limitation.
+
+  3. SEPARATION OF COMPONENTS. The SOFTWARE PRODUCT is licensed as a single
+     product. Its component parts may not be separated for use on more than one
+     COMPUTER.
+
+  4. COPYRIGHTS AND TRADEMARKS. This AGREEMENT does not grant you any rights in
+     connection with any copyrights or trademarks of DALLAS. All title and
+     copyrights in and to the accompanying printed or electronically supplied
+     materials and or documentation is owned by DALLAS. This AGREEMENT grants
+     you no rights to use such content. You may not copy the printed materials
+     accompanying the SOFTWARE PRODUCT.
+
+  5. RENTAL. You may not rent, lease, or lend the SOFTWARE PRODUCT.
+
+  6. LIMITED WARRANTY. The SOFTWARE PRODUCT IS PROVIDED "AS IS". TO THE MAXIMUM
+     EXTENT PERMITTED BY APPLICABLE LAW, DALLAS AND ITS SUPPLIERS DISCLAIM ALL
+     OTHER WARRANTIES AND CONDITIONS, EITHER EXPRESS OR IMPLIED, INCLUDING, BUT
+     NOT LIMITED TO, IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+     PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT, WITH REGARD TO THE
+     SOFTWARE PRODUCT, AND THE PROVISION OF OR FAILURE TO PROVIDE SUPPORT
+     SERVICES OR BUG FIXES. THIS LIMITED WARRANTY GIVES YOU SPECIFIC LEGAL
+     RIGHTS, YOU MAY HAVE OTHERS, WHICH VARY FROM STATE/JURISDICTION TO
+     STATE/JURISDICTION. Your exclusive remedy and DALLAS' entire liability
+     under this limited warranty will be at DALLAS' option to replace the
+     SOFTWARE PRODUCT or refund the fee paid for the SOFTWARE PRODUCT.
+
+  7. LIMITATION OF LIABILITY. TO THE EXTENT NOT PROHIBITED BY LAW, IN NO EVENT
+     WILL DALLAS OR ITS LICENSORS BE LIABLE FOR ANY LOST REVENUE, PROFIT OR
+     DATA, OR FOR ANY SPECIAL, INDIRECT, CONSEQUENTIAL, INCIDENTAL OR PUNITIVE
+     DAMAGES, HOWEVER CAUSED REGARDLESS OF THE THEORY OF LIABILITY, ARISING OUT
+     OF OR RELATED TO THE USE OF OR INABILITY TO USE THE SOFTWARE PRODUCT, EVEN
+     IF DALLAS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. In no event
+     will Dallas' liability to you, whether in contract, tort (including
+     negligence), or otherwise, exceed the amount paid by you for the SOFTWARE
+     PRODUCT under this agreement. The foregoing limitations will apply even if
+     the above stated warranty fails of its essential purpose.
+
+  8. TERMINATION. This AGREEMENT is effective until terminated. You may
+     terminate this AGREEMENT at any time by destroying all copies of the
+     SOFTWARE PRODUCT. This AGREEMENT will terminate immediately without notice
+     from DALLAS if you fail to comply with any provision of this AGREEMENT.
+     Upon Termination, you must destroy all copies of the SOFTWARE PRODUCT.
+
+  9. EXPORT REGULATIONS. The SOFTWARE PRODUCT and all technical data delivered
+     under this AGREEMENT are subject to US export control laws and may be
+     subject to export or import regulations in other countries. You agree to
+     comply strictly with all such laws and regulations and acknowledge that
+     you have the responsibility to obtain such licenses to export, re-export,
+     or import as may be required after delivery to you.
+
+ 10. U.S. Government Restricted Rights. If the SOFTWARE PRODUCT is being
+     acquired by or on behalf or the U.S. Government or by a U.S. Government
+     prime contractor or subcontractor (at any tier), then the Government's
+     rights in the SOFTWARE PRODUCT and accompanying documentation will be only
+     as set forth in this AGREEMENT; this is in accordance with 48 CFR 227.7201
+     through 227.7202-4 (for Department of Defense (DOD) acquisitions) and with
+     48 CFR 2.101 and 12.212 (for non-DOD acquisitions).
+
+ 11. MISCELLANEOUS. This AGREEMENT is the entire agreement between you and
+     DALLAS relating to the subject matter. It supercedes all prior or
+     contemporaneous oral or written communications, proposals, presentations
+     and warranties and prevails over any conflicting or additional terms of
+     any quote, order, acknowledgment, or other communication between the
+     parties relating to its subject matter during the term of this AGREEMENT.
+     No modification of this AGREEMENT will be binding, unless in writing and
+     signed by an authorized representative of each party. If you are acquiring
+     this SOFTWARE PRODUCT in the United States, this AGREEMENT is governed by
+     the laws of the state of Texas. If this SOFTWARE PRODUCT was acquired
+     outside the United States, then local law may apply. Should you have any
+     questions concerning this AGREEMENT, please contact, Dallas Semiconductor
+     Corporation, Contracts Administration, 4401 South Beltwood Pkwy, Dallas,
+     Texas 75244-3292.
+
+
+                                 TINI(TM) SOFTWARE
+                   DEVELOPMENT KIT SUPPLEMENTAL LICENSE TERMS
+
+These supplemental license terms ("SUPPLEMENTAL TERMS") add to or modify the
+terms of the TINI Development Software License Agreement (collectively, the
+"AGREEMENT"). Capitalized terms not defined in these Supplemental Terms shall
+have the same meanings ascribed to them in the AGREEMENT. These Supplemental
+Terms shall supersede any inconsistent or conflicting terms in the AGREEMENT,
+or in any license contained within the SOFTWARE PRODUCT.
+
+  1. INTERNAL USE AND DEVELOPMENT LICENSE GRANT. Subject to the terms and
+     conditions of this AGREEMENT, including, but not limited to, Section 2
+     (REDISTRIBUTABLES) and Section 4 (TINI TECHNOLOGY RESTRICTIONS) of these
+     SUPPLEMENTAL TERMS, DALLAS grants you a non-exclusive, non-transferable,
+     limited license to reproduce the SOFTWARE PRODUCT for internal use only
+     for the sole purpose of development of your application ("PROGRAM"),
+     provided that you do not redistribute the SOFTWARE PRODUCT in whole or in
+     part, either separately or included with any PROGRAM.
+
+  2. REDISTRIBUTABLES. In addition to the license granted in Paragraph 1 above,
+     DALLAS grants you non-exclusive, non-transferable, limited license to
+     reproduce and distribute. TINI SOFTWARE DEVELOPMENT KIT("TINI SDK")
+     software, those files specifically identified as redistributable in
+     APPENDIX "A" of this AGREEMENT, attached hereto and incorporated by
+     reference herein (the "REDISTRIBUTABLES") provided that: (a) you
+     distribute the REDISTRIBUTABLES complete and unmodified (unless otherwise
+     specified in the applicable APPENDIX "A"), and only bundled as part of
+     your software PRODUCT and applications that you develop (the "PROGRAMS";);
+     (b) you do not distribute additional software intended to supersede any
+     component(s) of the REDISTRIBUTABLES; (c) you do not remove or alter any
+     proprietary legends or notices contained in or on the REDISTRIBUTABLES;
+     (d) you only distribute the REDISTRIBUTABLES pursuant to your PROGRAM'S
+     license agreement that protects DALLAS' interests consistent with the
+     terms contained in the AGREEMENT; (e) you agree to defend and indemnify
+     DALLAS and its licensors from and against any damages, costs, liabilities,
+     settlement amounts and/or expenses (including attorneys' fees) incurred in
+     connection with any claim, lawsuit or action by any third party that
+     arises or results from the use or distribution of any and all Programs
+     and/or SOFTWARE PRODUCT, (f) you agree not to post the SOFTWARE PRODUCT in
+     whole or in part on an Internet Web Site without the express consent of
+     DALLAS, (g) you agree to only license your PROGRAM(S) in conjunction with
+     i) A TINI Board obtained from DALLAS, or ii) The TINI Chip Set, which must
+     include the Registration Number (h) you agree all PROGRAMS created for use
+     with the SOFTWARE PRODUCT will only be licensed to execute in conjunction
+     with an Ethernet Address Chip ("DS2502") or other approved substitute,
+     which is subject to express DALLAS approval; and (i) you understand and
+     agree the terms under which the PROGRAMS are licensed shall include the
+     Embedded Registration Number contained within the Ethernet Address Chip,
+     which shall serve as evidence of the validity of this license and your
+     rights to REDISTRIBUTE the SOFTWARE PROGRAM under this Section.
+
+  3. SEPARATE DISTRIBUTION LICENSE REQUIRED. You understand and agree that you
+     must first obtain a separate license from DALLAS prior to reproducing or
+     modifying any portion of the SOFTWARE PRODUCT other than as provided with
+     respect to REDISTRIBUTABLES in Paragraph 2 above.
+
+  4. TINI TECHNOLOGY RESTRICTIONS. You may not modify any Binary File ("BINARY
+     FILE"), identified as files contained within the downloadable distribution
+     package, which is available from www.iButton.com in a compressed format
+     ("COMPRESSED FILE") or any subpackages, including any "tini.tbin" ("TBIN")
+     file obtained from DALLAS, by creating additional files for use with an
+     8051 microprocessor or for use within the NVRAM or FLASH PROM memory areas
+     or otherwise causing the addition to or modification of the files in any
+     TBIN package. In the event that you create an additional file and
+     associated API(s) which (i) extends the functionality of a TINI
+     environment, and (ii) is exposed to third party software developers for
+     the purpose of developing additional software which invokes such
+     additional API, you must promptly publish broadly an accurate
+     specification for such API for free use by all developers. Refer to the
+     appropriate version of the Binary Code License (currently located at
+     http://www.iButton.com) for the availability of code, which may be
+     distributed with TINI Software Products and applications. You may not post
+     for any reason in whole or in part the SOFTWARE PRODUCT on an Internet
+     website or transfer any right hereunder except for the rights granted in
+     Section 2 of this AGREEMENT.
+
+  5. Trademarks and Logos. You acknowledge and agree as between you and DALLAS
+     that DALLAS owns the iButton trademark and all iButton-related trademarks,
+     service marks, logos and other brand designations including the iButton
+     Compatibility logo and TINI Compatibility logo ("DALLAS MARKS"), and you
+     agree to comply with the DALLAS Trademark and Logo Usage Requirements
+     currently located at http://www.iButton.com/. Any use you make of the
+     DALLAS MARKS inures to DALLAS' benefit.
+
+  6. Source Code. Software may contain source code that is provided solely for
+     reference purposes pursuant to the terms of this AGREEMENT.
+
+  7. TERMINATION. DALLAS may terminate this AGREEMENT immediately should any
+     Software become, or in DALLAS' opinion be likely to become, the subject of
+     a claim of infringement of a patent, trade secret, copyright or other
+     intellectual property right.
+
+
+                                  APPENDIX "A"
+
+                                    tini.tbin
+

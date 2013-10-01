@@ -1,0 +1,2604 @@
+Changes.txt (DC, 09.14.01)
+
+-=---------------=-
+TINI Firmware 1.02c
+-=---------------=-
+--------------------------------------------------------------------
+Go to http://www.ibutton.com/TINI/book.html for an online version of 
+"The TINI Specification and Developer's Guide".
+--------------------------------------------------------------------
+
+      See API_Changes.txt for changes to the com.dalsemi API.
+
+      See 1-Wire_Changes.txt for changes to the com.dalsemi.onewire
+      (formerly com.ibutton) API.
+
+      See Limitations.txt for a partial list of current limitations.
+
+      See Versions.txt for version information on software that is included
+      in this distribution.
+
+Significant Fixes & Changes
+-=========================-
+   1.02c
+   -===-
+-=============-
+
+   Problem    : TCP initial sequence numbers are predictable.
+
+   Since      : 1.0
+
+   Description: This is not a bug, but knowledge of the initial sequence
+                number makes it easier to maliciously take over a connection.
+                
+   Solution   : Use truly random ISNs.
+
+-=============-
+
+   Problem    : TINI replies to bad TCP flag combinations.
+
+   Since      : 1.0
+
+   Description: This is not a bug, but these combinations can be ignored.
+
+   Solution   : Ignore certain TCP flag combinations.
+
+-=============-
+
+    Problem    : External Serial Port Lockup
+
+    Since      : Beta
+
+    Description: Serial 3 lockup was being caused by the 16550 reporting 
+                 CTS being asserted when flow control was disabled. This 
+                 caused the write to incorrectly abort, which would cause 
+                 the IO subsystem to go into an infinite wait. This chain 
+                 of events have only been observed with serial3 writing 
+                 while serial2 reads at 115200
+
+
+    Solution   : Added an extra check in the external serial port 
+                 drivers to ignore the 16550 if flow control is not
+                 enabled.
+
+-=============-
+
+   Problem    : getHostname() and getDomainname() do not reflect changes made
+                by other processes
+
+   Since      : 1.0
+
+   Description: Hostname and Domainname are stored in the .tininet file which 
+                is updated by setHostname()/setDomainname(). There's also a
+                process-local copy of domainname and hostname which could get
+                out of sync with the .tininet file.
+
+   Solution   : Always read .tininet
+
+-=============-
+
+   Problem    : Serial input and output latency on small (< 10 byte) packets 
+                was too high for effective processing.
+
+   Since      : Beta 2
+
+   Description: The Serial Drivers would put the process to sleep, even if the
+                data was already available. Also, the Java layer of the serial 
+                driver had developed quite large over time, with multiple layers
+                calling into pre-javax.comm code.
+
+   Solution   : The native serial drivers were tweaked, and the Java layer was
+                completly eliminated. On small reads, the latency has been cut
+                by more than half.
+
+-=============-
+
+   Problem    : Closing a telnet connection abruptly sometimes caused
+                sessions to hang and spew exceptions.
+
+   Since      : Beta
+
+   Description: SystemInputStream was sometimes swallowing a read of a '-1'
+                from a stream.
+
+   Solution   : Throw an IOException or return a '-1' (as appropriate) from
+                SystemInputStream when it detects a closed stream.
+
+-=============-
+
+   Problem    : Some java opcodes are not optimized.
+
+   Since      : Alpha
+
+   Description: lushr,lshr,lshl,lneg,ladd,lsub,land,lor,lxor,
+                iadd,isub,iand,ior,ixor were not optimized.
+
+   Solution   : Optimized above opcodes.
+
+-=============-
+
+   Problem    : It was possible to "reconnect" to dead sockets
+
+   Since      : 1.0
+
+   Description: When the death timer hits, a connection is closed on TINI.
+                However, this was not signalled to the application, so there
+                was still a connection number associated with the socket. When
+                a new connection is opened, the connection number becomes valid
+                again and the application starts using the new connection.
+
+   Solution   : Signal the socket layer.
+
+-=============-
+
+   Problem    : BufferedReader would omit a single character under certain
+                situations using the readLine() method.
+
+   Since      : Beta
+
+   Description: When the BufferedReader refills its buffer, if the last
+                buffer ended in the middle of a newline ("\r\n"), its
+                end-index for the next buffer read would be off-by-1, 
+                resulting in the omission of one character.
+
+   Solution   : Fix the indexing problem in readLine().
+
+-=============-
+
+   Problem    : External serial port resources for serial3 would not get 
+                cleaned up when the process died if both serial2 and serial3
+                were opened in the same application. This would manifest itself
+                as a PortInUseException thrown on serial3 if the application
+                was run again without rebooting TINIOS.
+
+   Since      : Beta
+
+   Description: N/A
+
+   Solution   : The offending driver code was fixed.
+
+-=============-
+
+   Problem    : System.arraycopy did not throw exceptions with invalid data
+                copies from an Object array to an array of another object type.
+                You could do this...
+                  Object[] source = { "1","2", new Integer(3), "4", "5"};
+                  String[] dest = new String[5];
+                  System.arraycopy(source,0,dest,0,5);
+
+   Since      : 1.01
+
+   Description: We allowed any reference array to copy into any other type of 
+                reference array.
+
+   Solution   : The native array copy now throws an exception if the reference 
+                array types are different (and the source type isn't a subclass
+                of the dest type). In System.arraycopy, we detect this 
+                difference in array type and perform a slow copy instead of a 
+                fast native copy, allowing the VM to detect casting issues.
+                Note this only happens in cases where you try to copy from 
+                Object[] to String[]. Copying from String[] to Object[] is still
+                fast.
+
+-=============-
+
+   Problem    : ExternalInterrupt based applications (and any native library
+                that used System_RegisterProcessDestroyFunction) could have
+                resources freed by their process destroy functions when 
+                another, unrelated process exited. 
+
+   Since      : Beta
+
+   Description: The process destroy callback function was being called each time
+                any process exited.
+
+   Solution   : Only call the process destroy function when the process that
+                registered it exits. 
+
+-=============-
+
+   Problem    : Alternating calls to SystemInputStream read(byte[]) and 
+                readLine() caused an IndexOutOfBoundsException.
+
+   Since      : 1.01
+
+   Description: The internal count of number of bytes available was being
+                decremented by the wrong amount.
+
+   Solution   : Correct the number of available bytes logic.
+
+-=============-
+
+   Problem    : In raw mode, SystemInputStream.read(byte[]) did not block as 
+                advertised.
+
+   Since      : 1.01
+
+   Description: In raw mode, we were checking to see if any data was available 
+                before going down to the underlying stream.
+
+   Solution   : Remove the check for available data.
+
+-=============-
+
+   Problem    : Users could not extend Telnet and FTP Sessions to suit their 
+                own purposes.
+
+   Since      : Beta
+
+   Description: TelnetSession, FTPSession, and SerialSession were all final
+                classes.
+
+   Solution   : Removed final tag so user applications can extend.
+
+-=============-
+
+   Problem    : If BufferedReader's internal buffer ran out on the '\r' of
+                a line, the following '\n' was reported as a different, empty 
+                line.
+
+   Since      : Beta
+
+   Description: We did not handle the buffer running out correctly.
+
+   Solution   :
+
+-=============-
+
+   Problem    : People were using the "Update Loader" function in JavaKit when 
+                not necessary.
+
+   Since      : Alpha
+
+   Description: Updating the loader is a very dangerous operation, because its 
+                possible to get a loader-less TINI.
+
+   Solution   : Add a command line switch that must be called if someone wants 
+                to update their loader.
+
+-=============-
+
+   Problem    : People with bigger than 512K flash needed some way to load
+                their stuff onto TINI.
+
+   Since      : Alpha
+
+   Description: JavaKit had built in 'protection' against loading into banks 
+                other than 1-7.
+
+   Solution   : Added two options to allow loading to banks higher than 7 and 
+                to allow for different flash sizes.
+
+-=============-
+
+   Problem    : BuildDependency did not report error values usable by Ant and 
+                other third-party build tools.
+
+   Since      : 1.02
+
+   Description: BuildDependency was catching Exceptions and then simply
+                returning. Callers could not know if the build process failed 
+                or succeeded.
+
+   Solution   : Rethrow caught exceptions to indicate failure.
+
+-=============-
+
+   Problem    : Some java.io classes are inefficient with memory.
+
+   Since      : Alpha
+
+   Description: InputStreamReader, OutputStreamWriter, PrintStream,
+                DataOutputStream, and com.dalsemi.shell.server.SystemPrintStream
+
+   Solution   : Rewrote above classes for memory efficiency.
+
+-=============-
+
+   Problem    : Applications starting from .startup during SLUSH boot
+                would not know if an IP was acquired when using DHCP.
+
+   Since      : Beta 
+
+   Description: N/A
+
+   Solution   : A small addition was made to slush to wait for the DHCPListener
+                thread to lease an IP then continue on with slush boot. The 
+                default wait timeout is 10 seconds, which is changeable in the 
+                slush source by modifying DHCPLOCKTIMEOUT.
+
+-=============-
+
+   Problem    : DHCP sets only one DNS server IP.
+
+   Since      : 1.0
+
+   Description: DHCP sets the same DNS server IP for both primary and 
+                secondary DNS server.
+
+   Solution   : Fixed array source index.
+
+-=============-
+
+   Problem    : I2CPort performed an illegal start/stop condition.
+
+   Since      : 1.02
+
+   Description: N/A
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : I2CPort did not allow for SCL wait states by slave.
+
+   Since      : 1.02
+
+   Description: Slow I2C slaves were not able to keep up with a constant
+                data rate, and held SCL low. The I2C driver now detects this
+                condition and slows the bit rate to match the slave.
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : Reopening a CAN controller would sometimes lock up the
+                process.
+
+   Since      : 1.0
+
+   Description: The order of operations on CAN controller initialization 
+                would leave the controller in a lock up state in some 
+                situations. Killing and restarting the process would not clear 
+                the problem. A reset was necessary to reset the CAN controller 
+                hardware.
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : Thread.interrupt interrupts a sleeping Thread but does not
+                throw an InterruptedException.
+
+   Since      : 1.02b
+
+   Description: Internal state was not being marked as interrupted.
+
+   Solution   : Mark state as interrupted.
+
+-=============-
+
+   Problem    : Multicast packets fail after changing the IP address.
+
+   Since      : 1.0
+
+   Description: The Multicast Java class had a static initializer which
+                copied the IP address.
+
+   Solution   : Change the initializer so it runs every time a new object
+                is created, updating the IP address.
+
+-=============-
+
+   Problem    : Repeated reload in Internet Explorer would kill random
+                connections on the TINI or even crash it.
+
+   Since      : 1.0
+
+   Description: Handling of RST packets could cause destruction of socket 
+                data structures under high load or slow connections
+                or slow server software.
+
+   Solution   : Fixes to the nettcp module.
+
+-=============-
+
+   Problem    : Write permissions not checked.
+
+   Since      : Beta
+
+   Description: When writing over or appending to a file
+                that already exists, the write permissions
+                for that file are ignored.
+
+   Solution   : Firmware changed to check for write access.
+
+-=============-
+
+   Problem    : TINI's DHCP client would not renew its IP address
+
+   Since      : 1.0
+
+   Description: Several issues in the DHCP client, among them:
+                - sends packets with source IP address, although
+                  no IP has been leased
+                - all packets contain invalid fields, fields are
+                  not properly filled in for state
+                - sends unsolicited address request package after
+                  each IP release, invalidating the release packet
+                - never enters rebinding state
+                - loses IP address after 1/2 of lease time,
+                  cannot renew leases if a DHCP relay is used
+                - does not stay in renewing state for proper amount
+                  of time
+                - does not properly notify of IP loss in all cases
+                - does not invalidate IP if IP is lost
+
+   Solution   : Fixes to Slush and DHCPClient.
+
+-=============-
+
+   Problem    : Multiple TINIs on the same network would generate an
+                unusual amount of IGMP messages on the network if all
+                of the TINIs belonged to the same group.
+
+   Since      : 1.0 
+
+   Description: When receiving an IGMP report message, TINI would
+                transition to the DELAYING state, thus ultimately
+                generating a report.
+
+   Solution   : Conform to RFC1112 and transition to IDLE state instead.
+
+-=============-
+
+   1.02b
+   -===-
+-=============-
+
+   Problem    : Receiving all TCP data from TINI sometimes took a long
+                time.
+
+   Since      : Alpha
+
+   Description: When a TINI application closed a TCP socket which still
+                had data in its output buffer, the firmware cleared the
+                HAVE_OUTPUT_DATA bit. The data would then only be sent at
+                the next retry.
+
+   Solution   : Don't clear that bit.
+
+-=============-
+
+   Problem    : TINI would try to communicate on the network even if it didn't 
+                have a MAC address part.
+
+   Since      : Alpha
+
+   Description: N/A
+
+   Solution   : Disable Ethernet if MAC ID is zero.
+
+-=============-
+
+   Problem    : LineNumberReader would throw NullPointerException if the
+                underlying stream threw an exception.
+
+   Since      : 1.02
+
+   Description: Actually this was a more general problem with exception block
+                and Java method boundaries.  It showed up in LineNumberReader
+                under certain circumstances.
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : TINI was unable to send mail to certain mail servers.
+
+   Since      : 1.0
+
+   Description: mailto protocol class did not properly handle multiline server
+                replies as specified in RFC 821 appendix E.
+
+   Solution   : Added handling of multiline replies.
+
+-=============-
+
+   Problem    : Integer/Long decode() did not correctly report a bogus digit,
+                but would always print "-1"
+
+   Since      : Alpha
+
+   Description: Decimal would always be -1 because that is thei error code when
+                we can NOT convert a digit.
+
+   Solution   : Print charAt instead of decimal.
+
+-=============-
+
+   Problem    : DHCP Release messages contain garbage options after
+                "end of options" tag.
+
+   Since      : Beta
+
+   Description: Data buffer was reused and not properly cleared.
+
+   Solution   : Clear end of buffer.
+
+-=============-
+
+   Problem    : Error messages like "404 - Not found" generated by HTTPServer
+                would not display correctly.
+
+   Since      : 1.0
+
+   Description: arraycopying the error message overwrote the HTML <body> tag.
+
+   Solution   : Increase the buffer index before copying the error message.
+
+-=============-
+
+   Problem    : When browsing TINI web pages with Internet Explorer, it would
+                sometimes display parts of the HTTP header, corrupting display
+                output.
+
+   Since      : 1.0
+
+   Description: When resending SYN ACK packets due to a timeout, the code would
+                not supply the connection number to the function responsible for
+                increasing the sequence number. The first data packet would
+                therefore have a sequence number too small by one, destroying
+                the HTTP reply header.
+
+   Solution   : Supply the correct connection number.
+
+-=============-
+
+   Problem    : gftp ftp client would not work with TINI ftp server.
+
+   Since      : N/A
+
+   Description: gftp uses LIST -L instead of LIST.
+
+   Solution   : Ignore the -L parameter.
+
+-=============-
+
+   Problem    : TINI ftp server didn't implement NOOP, MODE, STRU.
+
+   Since      : Alpha
+
+   Description: RFC 959 mandates that a minimal RFC compliant ftp server must
+                implement these commands.
+
+   Solution   : Added these commands.
+
+-=============-
+
+   Problem    : TINI ftp client broken (list, get, put terminate session).
+
+   Since      : Alpha
+
+   Description: The ftp client is not multithreaded and waits for a result of a
+                command not yet issued.
+
+   Solution   : Added a work-around which ignores the result.
+
+-=============-
+
+   Problem    : TINI sent funny RST packets.
+
+   Since      : Alpha
+
+   Description: The urgent field in the TCP header was not cleared.
+
+   Solution   : Clear the field before sending RST.
+
+-=============-
+
+   Problem    : TINI DNS cache would not timeout and expire entries
+
+   Since      : Alpha
+
+   Description: DNS entries are cached, and not rechecked for expiration causing
+                possible problems with DNS servers that modify IP address
+                mappings frequently.
+
+   Solution   : Added DNS cache timeout.
+
+-=============-
+
+   Problem    : TINI would send ICMP port unreachable packets if it wasn't
+                listening to a port even though the destination address was
+                a multicast address.
+
+   Since      : 1.01
+
+   Description: N/A
+
+   Solution   : Added check for multicast address to ICMP function.
+
+-=============-
+
+   Problem    : TINI would use up all kernel memory if it received unsolicited
+                ICMP echo responses.
+
+   Since      : Alpha
+
+   Description: When not expecting ICMP echo replies, the ICMP module just
+                exited without freeing the packet buffer.
+
+   Solution   : Added call to 'free' buffer.
+
+-=============-
+
+   Problem    : com.dalsemi.tininet.TININet.getSubnetMask would only work for
+                eth0.
+
+   Since      : Alpha
+
+   Description: Static string in function call to network module.
+
+   Solution   : Fixed call to use interface parameter instead of static string.
+
+-=============-
+
+   Problem    : Network packet flood triggered hardware watchdog.
+
+   Since      : Alpha
+
+   Description: The CPU was spending all its time in the Ethernet interrupt
+                handler, preventing the execution of the scheduler.
+
+   Solution   : Changed Ethernet interrupt so it leaves network interrupts
+                disabled and have the scheduler reenable them after checking
+                the watchdog. This leaves about 20% of the CPU to do other work
+                than handling Ethernet interrupts.
+
+-=============-
+
+   Problem    : Random reboots in network module.
+
+   Since      : Alpha
+
+   Description: Both the Ethernet interrupt and IOPoll accessed the same queues,
+                but there were no semaphores to control access.
+
+   Solution   : Protected the network queues against simultaneous access.
+
+-=============-
+
+   Problem    : Malformed packets would crash TINI.
+
+   Since      : Alpha
+
+   Description: Buffer overruns occurred because TINI trusted that packet
+                lengths and parameters were truthful and legal.
+
+   Solution   : Added bounds checking to several network modules.
+
+-=============-
+
+   Problem    : Properties was not trimming data keys and values.
+
+   Since      : 1.02
+
+   Description: Had taken out the call to trim() because tests made it look like
+                Sun's implementation did not do it.
+
+   Solution   : Changed to trim the data keys and values.
+
+-=============-
+
+   Problem    : System, Telnet and SerialInputStreams would behave poorly when
+                used by non-Slush applications by throwing exceptions and not
+                handling backspaces correctly.
+
+   Since      : Beta
+
+   Description: The streams were not designed with non-Slush, non-readLine only
+                uses in mind.
+
+   Solution   : SerialInputStream, TelnetInputStream and SystemInputStream
+                changed to handle general cases so an application could read
+                data with embedded backspaces.
+
+-=============-
+
+   Problem    : Properties was locking up on load if someone was using Unicode
+                characters.
+
+   Since      : Beta
+
+   Description: Properties was draining an exception and never incrementing an
+                index into an array caused an infinite loop.
+
+   Solution   : Fixed to handle UTF8 data.
+
+-=============-
+
+   Problem    : Telnet sessions closed under some circumstances would leave idle
+                threads running around, if a process was running in the
+                background.
+
+   Since      : Beta
+
+   Description: When catching an exception on a SystemInputStream (usually
+                TelnetInputStream), if the stream was part of a background
+                process, it would not end the telnet session.
+
+   Solution   : End the telnet session on all errors.
+
+-=============-
+
+   Problem    : When reading a property file (with the Properties class)
+                that only used '\r', incorrect keys would be returned.
+
+   Since      : 1.01
+
+   Description: Not handling the case where '\r' ended a line correctly in
+                the DataInputStream class.
+
+   Solution   : Changed to handle this case correctly.
+
+-=============-
+
+   Problem    : CAN1 has trouble initializing correctly in some cases.
+                CAN0 works correctly and is unaffected.
+
+   Since      : 1.02
+
+   Description: sendFrame() and receive() would throw exceptions due to
+                disabled CAN controller one (CAN1).  Controller was
+                not initialized correctly.
+
+   Solution   : Fixed incorrect mask in initialization check.
+
+-=============-
+
+   Problem    : Thread.interrupt causes IllegalMonitorStateException on a Thread
+                that is blocked on wait.
+
+   Since      : Beta
+
+   Description: N/A
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : java.util.Properties broken in 1.02.
+
+   Since      : 1.02
+
+   Description: Properties was no longer trimming keys and data.
+
+   Solution   : Roll back to previous version. Properties changes were prompted
+                by tests indicating change was needed when it was not.
+
+-=============-
+
+   Problem    : File Redirect Echo.
+
+   Since      : Beta
+
+   Description: If file re-directed input was specified from slush, the output
+                would be echoed to the screen.
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : Mailhost set to Loopback.
+
+   Since      : Alpha
+
+   Description: Trying to clear the mailhost value (TININet.setMailhost(""))
+                would set it to loopback.
+
+   Solution   : Passing null or "" to setMailhost now sets the mailhost
+                to 0.0.0.0
+
+-=============-
+
+   Problem    : Under extremely heavy memory usage heap corruption could occur.
+
+   Since      : 1.02
+
+   Description: There is a chance that the garbage collector could corrupt
+                memory. However, normal operation will not reproduce the
+                problem. Under extremely heavy memory allocations, when the
+                garbage collector runs continuously and the user is
+                allocating memory continuously, it is possible to have
+                heap corruption occur after several hours.
+
+   Solution   : Memory corruption issue has been fixed.
+
+-=============-
+
+   Problem    : I2C master ACKs last byte on reads from slave.
+
+   Since      : 1.02
+
+   Description: The TINI I2C master firmware will ACK the last byte of a read
+                from an I2C slave contrary to the protocol spec.
+
+   Solution   : Removed ACK on last byte of reads.
+
+-=============-
+
+   Problem    : SerialInputStream.close was sychronized improperly. You could
+                not call close if another thread was blocking on read.
+
+   Since      : 1.0
+
+   Description: N/A
+
+   Solution   : Close method is no longer synchronized waiting for the read to
+                complete.
+
+-=============-
+
+   Problem    : Removing the last serial port event listener would not remove
+                the listening thread.
+
+   Since      : 1.0
+
+   Description: When an application registers an event listener for the serial
+                port and then removes it, the listening thread would not be
+                removed. This results in a thread leak.
+
+   Solution   : Listening thread is stopped when the event listener is removed.
+
+-=============-
+
+   Problem    : Float.equals and Double.equals do not return true when comparing
+                two NaNs that have binary values that are not the same.
+
+   Since      : Beta 1.0
+
+   Description: Binary comparison was being performed for all values.
+
+   Solution   : Added extra test for NaN.
+
+-=============-
+
+   Problem    : javax.comm.SerialPort.setRcvFifoTrigger throws
+                IllegalArgumentException.
+
+   Since      : 1.02
+
+   Description: N/A
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : Serial port 0 periodically dropped data.
+
+   Since      : 1.02p2
+
+   Description: TINI periodically dropped serial data
+
+   Solution   : Put critical code in protected sections.
+
+-=============-
+
+   1.02
+   -==-
+-=============-
+
+   Problem    : The native methods Mem_Copy*, Mem_Clear* and Mem_Compare* did
+                not set DPS to a known value. This could result in the change
+                of the source and target roles if DPS was not zero when these
+                methods were called.
+
+   Since      : Beta
+
+   Description: See Native_ReadMeNOW.txt for more information.
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : Calling com.dalsemi.system.TINIOS.enableSerialPort1(boolean)
+                alternating true and false would cause a system hang.
+
+   Since      : 1.0
+
+   Description: N/A
+
+   Solution   : Stopped serial driver from registering too many times.
+
+-=============-
+
+   Problem    : 1-Wire subsystem needs updating to new long line testing
+                results.
+
+   Since      : 1.0
+
+   Description: Long line testing in the lab has resulted in new info about
+                1-Wire and long lines. The driver now uses better parameters
+                for long lines in both Standard Speed and Flex Speed
+                modes.
+
+   Solution   : N/A
+
+-=============-
+
+   Problem    : I can run a class that has a "public void main(String[])"
+                instead of a "public static void main(String[])".
+
+   Since      : TINIConvertor
+
+   Description: To make the application, we just looked for any method
+                "public void main(String[])", and didn't check to see
+                if it was static or not.
+
+   Solution   : Check to see if the method is static or not.
+
+-=============-
+
+   Problem    : Datagram Packet did not check buffer length
+
+   Since      : Since TINI crawled out from the primordial goo
+
+   Description: DatagramPacket did not check the length of the packet array
+                given by the user before sending or recieving packets. If
+                the packet length specified is greater that the array
+                length, this could potentially lead to memory overruns.
+
+   Solution   : DatagramPacket setLength() and setData() now throw an
+                IllegalArgumentException if the packet length is greater
+                than the datagram length. If setData() is called and the
+                existing length is greater than the new array's length,
+                then the length of the datagram will automagically
+                shorten itself to the size of the new datagram array.
+
+-=============-
+
+   Problem    : Memory leak in File.delete() and File.renameTo().
+
+   Since      : Beta
+
+   Description: N/A
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : Enabling serial1 many times causes a reboot
+
+   Since      : 1.02p1
+
+   Description: N/A
+
+   Solution   : Fixed enable code to not reboot system.
+
+-=============-
+
+   Problem    : Parity on serial1 does not work.
+
+   Since      : 1.02p1
+
+   Description: N/A
+
+   Solution   : Send the proper parity bits.
+
+-=============-
+
+   Problem    : Several memory leaks fixed on the internal serial
+                ports.
+
+   Since      : 1.02p1
+
+   Description: Changing buffer sizes, enabling serial port 1 and
+                closing the serial ports caused memory leaks.
+
+   Solution   : Free the memory when done with it.
+
+-=============-
+
+   Problem    : Trouble recycling PPP objects.
+
+   Since      : Beta
+
+   Description: PPP object was not releasing native resources. Added
+                stopPPPThread method to allow application to kill PPP daemon in
+                event thread. Exposed freeInterfaceWrapper method to allow
+                applications to release native resources.
+
+   Solution   : Call these two functions before removing last reference to PPP
+                object.
+
+-=============-
+
+   Problem    : Problem connecting to ISP's
+
+   Since      : Beta
+
+   Description: PPP HDLC decoder was being confused by HDLC runt packets.
+
+   Solution   : HDLC decoder now ignores runt packets.
+
+-=============-
+
+   Problem    : PPP native resource leak.
+
+   Since      : Beta
+
+   Description: If an application that contained PPP objects was killed
+                native resources were not being freed.
+
+   Solution   : PPP now frees all native resources when application exits or
+                is killed.
+
+-=============-
+
+   Problem    : DHCP client not setting domain name after acquiring IP address.
+
+   Since      : 1.02p1
+
+   Description: DHCP client does not set domain name.
+
+   Solution   : Fixed DHCP client.
+
+-=============-
+
+   Problem    : The getLastModified() method of URLConnection would throw an
+                exception if the URL response contained a valid last-modified
+                header, and the getHeaderFieldDate() throws exceptions on
+                invalid data, rather than returning the default.
+
+   Since      : Beta
+
+   Description: URLConnection was trying to parse the last modified field
+                as an Integer, and not catching an Exception on parsing in
+                the getHeaderFieldDate() method.
+
+   Solution   : Use the Date.parse() method in getLastModified, and catch
+                the exception and return a default in getHeaderFieldDate().
+
+-=============-
+
+   Problem    : Telnet stability
+
+   Since      : Beta
+
+   Description: If the accept() call in Telnet throws an IOException due to
+                too many sockets, we need to wait to try to call the accept()
+                method again, or else we will see lots of IOExceptions
+                chewing up TINI's memory.
+
+   Solution   : Implemented an exponential backoff starting at 100 ms and
+                maxing out around 5 minutes in TelnetServer. A successful
+                connection resets the backoff timer.
+
+-=============-
+
+   Problem    : Calling Calendar.set(HOUR, x) doesn't correctly set the hour.
+
+   Since      : The birth of the .util package.
+
+   Description: There are two hour-like field for calendar, HOUR and
+                HOUR_OF_DAY. We were only looking at HOUR_OF_DAY in our
+                internal calculations.
+
+   Solution   : Also look at HOUR, but we also have to determine which was
+                set most recently. Implemented a timeStamp and modified[]
+                table to track when fields are set relative to each other.
+                In GregorianCalendar, changed the computeTime() method to
+                actually use this data.
+
+-=============-
+
+   Problem    : BuildDependency's dependency on ';' might not make Solaris
+                users happy.
+
+   Since      : 1.02p2
+
+   Description: There was some concern that a semi-colon would be
+                interpreted as a separator on the command-line.
+
+   Solution   : BuildDependency now treats ',' commas exactly as
+                semi-colons. Also, the BuildDependency defaults
+                have been updated to reflect a new OneWireContainer,
+                family code 33.
+
+-=============-
+
+   Problem    : Another flavor of Telnet Death
+
+   Since      : Beta
+
+   Description: The accept() method in TelnetServer would throw exceptions
+                even though netstat only reported two sockets being used.
+
+   Solution   : When sockets were being closed and opened at about the same
+                time,  the internal socket count would not decrement because
+                the socket would not validate in some conditions. Added a
+                weaker validate method in the event a socket was closing
+                to make sure there are no 'ghost' sockets.
+
+-=============-
+
+   Problem    : Can't load tbin files to banks larger than 7 in JavaKit.
+
+   Since      : Beta
+
+   Description: We were explicitly checking against that. Also, we were
+                sending the bank number as (bankNum + 0x30) which is bad
+                for any bank higher than 9.
+
+   Solution   : Added an "-allow" option to allow loading to banks higher
+                than 7. Also, correctly implemented sending the bank number
+                to the loader.
+
+-=============-
+
+   Problem    : Double toString representation accuracy.
+
+   Since      : Beta
+
+   Description: I noted that some numbers in certain ranges usually printed
+                out more digits than in other ranges.
+
+   Solution   : Added a heuristic to account for this.
+
+-=============-
+
+   Problem    : Date.parse() method chokes if there is something like 'Sat'
+                in the String.
+
+   Since      : Beta
+
+   Description: Although ignored, Strings like 'Sat', 'Sa', and 'gm' are
+                allowed to be in the Date String, while 'BC' is not.
+
+   Solution   : Added a String of allowed tokens to check against.
+
+-=============-
+
+   Problem    : BitSet failed API conformance tests.
+
+   Since      : Beta
+
+   Description: You could call BitSet's constructor in such a manner that
+                the size of the BitSet was not a multiple of 64. Also,
+                the hashCode() method occasionally returned incorrect
+                values.
+
+   Solution   : Fixed a logic error in the constructor and a sign-extension
+                issue in hashCode.
+
+-=============-
+
+   Problem    : GetOpt throws an ArrayIndex Exception after its reported a
+                failure.
+
+   Since      : 1.02p1
+
+   Description: There was one spot in the code we were incrementing the
+                pointer without making sure we were still in bounds. This
+                would only occur if there were errors in the arguments, i.e.
+                an argument was expected to follow a switch.
+
+   Solution   : Check the index before accessing the array.
+
+-=============-
+
+   Problem    : SimpleTimeZone failed API conformance tests.
+
+   Since      : Beta
+
+   Description: We had no toString() method, and hashCode produced incorrect
+                results. Also, the clone() method always set useDaylight to
+                true.
+
+   Solution   : Added toString(), fixed hashCode(), and preserved the value
+                of useDaylight. Note that toString() still does not match
+                Sun's implementation, because Sun is for some reason
+                reporting internal implementation details in their toString()
+                method. We implemented differently, so this data does not
+                appear in our toString() result.
+
+-=============-
+
+   Problem    : If I get a TimeZone and mess with its rawOffset, then get
+                that TimeZone again later, it still has the skewed
+                rawOffset.
+
+   Since      : Beta
+
+   Description: We were giving out the VM's only copy of the TimeZone.
+
+   Solution   : Clone the TimeZone before handing it out in
+                TimeZone.getTimeZone().
+
+-=============-
+
+   Problem    : FTP connections through the URL classes don't return the
+                right content-length.
+
+   Since      : 1.02p1
+
+   Description: We did away with the FTPInputStream in the interest of
+                speed and API size, although it was storing the
+                content-length for us.
+
+   Solution   : We had the data stored elsewhere by parsing the FTP server's
+                response line (where it says "(54324 bytes)").
+
+-=============-
+
+   Problem    : FTP requests through a proxy didn't work.
+
+   Since      : Beta
+
+   Description: We have to add a request header field 'Host' to make the
+                URL stuff work with certain flavors of Microsoft Servers
+                that barf if that field is missing. However, FTP proxy's
+                don't like this header field.
+
+   Solution   : Added a method in com.dalsmei.protocol.http.Connection
+                setFTP() to tell the connection that it is an FTP proxy
+                connection, so it knows if it needs to skip cramming the
+                'Host' field onto the headers. Also,
+                com.dalsemi.protocol.ftp.Handler has to tell the new
+                connection that it is a procy FTP connection.
+
+-=============-
+
+   Problem    : Proxy settings aren't handled right.
+
+   Since      : Beta
+
+   Description: Sun uses system (per-process) properties "ftpProxySet",
+                "ftpProxyHost", and "ftpProxyPort" for FTP proxies, and
+                "http.proxyHost"/"http.proxyPort" OR "proxyHost"/"proxyPort"
+                for HTTP proxies. We were only looking in TININet for
+                system-wide properties.
+
+   Solution   : Change the URL-related classes to search the System
+                properties for proxies. This means that programs that
+                had earlier had lines like:
+                     TININet.setProxyHost("1.1.1.1");
+                     TININet.setProxyPort(8088);
+                Will need to change to have lines like this:
+                     System.getProperties().put("proxyHost", "1.1.1.1");
+                     System.getProperties().put("proxyPort", "8088");
+                Depending on which proxy will be used.
+
+-=============-
+
+   Problem    : Putting a file in FTP to a directory that did not exist
+                kills the session.
+
+   Since      : Beta
+
+   Description: An uncaught exception bubbled up and whacked the session
+                when the FileOutputStream was created to the non-existant
+                directory.
+
+   Solution   : Catch the exception and print a nice message about the
+                failure.
+
+-=============-
+
+   Problem    : You can't clear out the proxy settings in TININet once
+                they're set.
+
+   Since      : Beta
+
+   Description: By passing null or "" to setProxyHost, you should be
+                unsetting any proxy settings, but we pass that value
+                to InetAddress, which returns localhost as its default
+                in event of failure. That's no good.
+
+   Solution   : Catch those values and change the input String to "0.0.0.0",
+                which equates to NOT_SET.
+
+-=============-
+
+   Problem    : Locale failed API conformance tests.
+
+   Since      : Beta
+
+   Description: Variant settings were destoryed. We were setting the
+                internal variant to the value of the Country passed in.
+
+   Solution   : Don't do that.
+
+-=============-
+
+   Problem    : ListResourceBundle and PropertyResource bundle can report
+                duplicate keys.
+
+   Since      : Beta
+
+   Description: Happens when a child resource bundle's keys overrides the
+                parents. In this case, the child's key should be returned.
+
+   Solution   : Use a Vector to accumulate the child and parents keys,
+                watching for and ignoring any duplicates.
+
+-=============-
+
+   Problem    : getObject() in ResourceBundle always throws a
+                MissingResourceException when the parent has the object.
+
+   Since      : Beta
+
+   Description: We weren't setting up the parent hierarchy when creating
+                a resource bundle. Then, in getObject(), if we can't find
+                the key in the child, then we look in the parent. But then,
+                irregardless of success or failure, we threw an Exception.
+
+   Solution   : Set up the parent hierarchy, and check for success when
+                getting the object from the parent.
+
+-=============-
+
+   Problem    : Date failed API conformance tests.
+
+   Since      : Beta
+
+   Description: UTC() throws an exception, and toGMTString() does
+                not put a '0' in front of single-digit dates.
+
+   Solution   : The UTC() method was changed to use "GMT" time zone rather
+                than "UTC", which does not exist on TINI. Changed the
+                String formatting code to put the extra '0' in the String
+                when needed.
+
+-=============-
+
+   Problem    : In a time zone with DST, setting a Calendar's date
+                to March 100th doesn't change us to Daylight Sacings Time.
+
+   Since      : Beta
+
+   Description: March 100th==June 8th, so it should be in DST, but we were
+                getting our DST offset before with the month.
+
+   Solution   : If the date is out of valid range (1-31), recalculate the
+                DST offset with the new month and date.
+
+-=============-
+
+   Problem    : StreamTokenizer failed API conformance tests.
+
+   Since      : Beta
+
+   Description: We weren't interpreting C-style comments or NUMBER digits
+                correctly.
+
+   Solution   : For C-style comments, we saw the '/' part of '/*/ and
+                assumed it was a normal comment to the end of the line.
+                Also, if we found a lone '.' in the stream, since it
+                is a NUMBER type, we tried to call Double.valueOf(String)
+                on it, and got an exception, but then decided it was a
+                WORD type, which it wasn't.
+
+-=============-
+
+   Problem    : Properties calls trim() on any keys it loads.
+
+   Since      : Beta
+
+   Description: It should not trim() the keys.
+
+   Solution   : We have decided to implement Properties() to the 1.2 style.
+                See limitations.txt for more information.
+
+-=============-
+
+   Problem    : Bloat.
+
+   Since      : Beta
+
+   Description: Many classes were using for-loops to fill and copy arrays,
+                and not sharing that resulted in lots of duplicate code.
+
+   Solution   : The following classes have been scoured to replace for-loops
+                with methods from the class com.dalsemi.system.ArrayUtils
+                whenever possible, and also to use the newly public IPString
+                methods in TININet (see API Changes):
+                     com.dalsemi.tininet.http.HTTPServer
+                     com.dalsemi.tininet.dns.DNSClient
+                     com.dalsemi.tininet.dhcp.DHCPClient
+                     com.dalsemi.tininet.TININet
+                     java.net.InetAddress
+
+-=============-
+
+   Problem    : ResourceBundle failed API conformance tests.
+
+   Since      : Beta
+
+   Description: We weren't throwing an Exception if a bundle could not be
+                found. Also, when searching for a bundle under a given
+                locale, if we could not find it we weren't looking for
+                the bundle under the default locale as well.
+
+   Solution   : Fix the above inconsistencies.
+
+-=============-
+
+   Problem    : Java code verifier turned up some inefficiencies in code.
+
+   Since      : N/A
+
+   Description: Many classes had logic inefficiencies, like a comparison
+                statement that was always the same or a mathematical
+                operation that always had the same result.
+
+   Solution   : The following classes contained such inefficiencies, and
+                they were removed:
+                          java.util.Date
+                          java.util.GregorianCalendar
+                          java.util.SimpleTimeZone
+                          java.lang.Math
+                          com.dalsemi.tininet.http.HTTPServer
+                          java.io.FileInputStream
+                          java.io.FileOutputStream
+                          java.io.RandomAccessFile
+
+-=============-
+
+   Problem    : Integer.parseInt() needs a smarted overflow indicator for
+                errors.
+
+   Since      : Beta
+
+   Description: It turns out there's this number (429496730) that when
+                multiplied by 10 as an 'int', doesn't overflow by going
+                negative, but it becomes positive, something like +4.
+
+   Solution   : Check if the intermediate value is less that the current
+                value while parsing the integer.
+
+-=============-
+
+   Problem    : java.lang.Class failed API conformance tests.
+
+   Since      : Beta
+
+   Description: Our forName() allowed for Primitive classes (boolean, int)
+                to be loaded, though that shouldn't be allowed. forName()
+                and getPrimitiveClass() were charing the same cache. Also,
+                cast checking needed serious work--Checking the cast on
+                things like int[][]-->Object[], String[][]-->Object[],
+                and Object[]-->Object would fail.
+
+   Solution   : Make two caches, one for primitive classes and one for
+                non-primitives. Also,  fix the cast checking method.
+
+-=============-
+
+   Problem    : Long's hashCode method doesn't match Sun's implementation.
+
+   Since      : Beta
+
+   Description: We were jsut casting the long down to an int.
+
+   Solution   : Changed to XOR the high and low 32 bits together.
+
+-=============-
+
+   Problem    : Math failed API conformance tests.
+
+   Since      : Beta
+
+   Description: ceil() was broken horribly. Many other methods failed on
+                special cases (i.e., one number is NaN), or were casting
+                doubles to int's rather than long's.
+
+   Solution   : Changed the ceil() implementation to look more like
+                floor()'s implementation. Also, the following methods
+                were changed to handle special cases or cast to long's
+                rather than int's:
+                      log
+                      floor
+                      rint
+                      round(float)
+                      round(double)
+                      max
+                      min
+
+-=============-
+
+   Problem    : String failed API conformance tests.
+
+   Since      : Beta
+
+   Description: Constructor String(char[], int, int) wasn't checking the
+                second argument to make sure it wasn't negative, so we'd
+                try to create an array and get a NegativeArraySizeIndex,
+                rather than a StringIndexOutOfBounds. Also, in the
+                encoder Constructor, if offset!=0, the encoding process
+                would fail because we would pass the wrong data to the
+                encoder. In method substring(int), we weren't checking
+                for the index out of bounds.
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : If you su in a telnet session then exit, your session
+                freezes.
+
+   Since      : 1.02p1
+
+   Description: There was a 'return' after the call to end the session,
+                which is bad if you've su'd because then the session's
+                thread has exited and you can't continue on.
+
+   Solution   : Removed the call to return.
+
+-=============-
+
+   Problem    : When you log in to an FTP session, it doesn't change you
+                to your home directory like telnet sessions do.
+
+   Since      : Beta
+
+   Description: N/A
+
+   Solution   : Changed to log in to your home directory if it exists.
+
+-=============-
+
+   Problem    : Sometimes a ServerSocket starts throwing infinite
+                IOException on accept().
+
+   Since      : Beta
+
+   Description: If a socket was aborted (a RESET sent) before TINI created
+                a socket object for it, we would still try to clean it up.
+                The problem is we haven't set its connection number yet,
+                that memory was just MALLOC'd so its all 0's. So, we end
+                up aborting whatever socket is at connection 0. If thats
+                a server socket, thats bad--then socket validation fails
+                and you can't accept any new sockets.
+
+   Solution   : If the state of the socket recieving the RESET is SYN_RCVD,
+                don't call SOCK_Abort, just clean everything else up.
+
+-=============-
+
+   Problem    : Can't bypass the .startup file by hitting the '5' key.
+
+   Since      : 1.02p1
+
+   Description: Freakin' Stephen was using System.in.available() to see if
+                any data was waiting, but that implementation of
+                SystemInputStream reportedincorrect values that was fixed by
+                1.02p1, so Slush never thought any data was available.
+
+   Solution   : Changed Slush to get the root input stream to find available
+                data.
+
+-=============-
+
+   Problem    : netstat prints out slowly.
+
+   Since      : Beta
+
+   Description: It was byte banging.
+
+   Solution   : Use a BufferedOutputStream.
+
+-=============-
+
+   Problem    : TINI stays up for days at a time now (I guess that's not
+                really a problem)
+
+   Since      : Alpha
+
+   Description: N/A
+
+   Solution   : Added a "Days: " line to the 'stats' command in Slush.
+
+-=============-
+
+   Problem    : Trying to set Slush's time zone to an invalid time zone
+                gets an exception.
+
+   Since      : Beta
+
+   Description: N/A
+
+   Solution   : Catch the exception and print out the usage string.
+
+-=============-
+
+   Problem    : 'ps' doesn't report owner names.
+
+   Since      : Beta
+
+   Description: N/A
+
+   Solution   : Report owner names along with process names.
+
+-=============-
+
+   Problem    : If I try to execute a directory (duh) with the slush command
+                'source', I get an exception.
+
+   Since      : Beta
+
+   Description: N/A
+
+   Solution   : Print out a nice error message.
+
+-=============-
+
+   Problem    : Slush does not release CommPortOwnership listener when
+                serialServer is shut down.
+
+   Since      : 1.02p2
+
+   Description: N/A
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : Serial Ports leak memory when port is opened.
+
+   Since      : Alpha
+
+   Description: N/A
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : Invoking methods with very large (> 15 single-width) parameters
+                lists causes the system to crash.
+
+   Since      : Alpha
+
+   Description: N/A
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : Only the static initializers with non-constant static fields
+                are executed
+
+   Since      : Alpha
+
+   Description: N/A
+
+   Solution   : All static initializers are now run regardless of the
+                existence of static fields.
+
+-=============-
+
+   1.02p3
+   -=====-
+-=============-
+
+   Problem    : Process destroy routines destroyed system data.
+
+   Since      : Beta
+
+   Description: N/A
+
+   Solution   : Fixed.
+
+-=============-
+
+   1.02p2
+   -=====-
+-=============-
+
+   Problem    : If a ServerSocket, on port p, is closed and then reopened
+               (on p) a BindException is thrown if any other sockets bound to
+               p are still active. Even if they are not in the LISTEN state.
+
+   Since      : Alpha
+
+   Description: None
+
+   Solution   : This is fixed for 1.02. As long as no other TCP connections
+                exist on the same port in the LISTEN state a ServerSocket on
+                that port can be created.
+
+-=============-
+
+   Problem    : ThreadGroup.remove not called on Thread creation/start error.
+
+   Since      : Beta
+
+   Description: This problem could manifest itself as errors in active thread
+                count, etc. The problem usually only occurs when an attempt
+                is made to start more than the maximum number of allowed
+                Threads.
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : CanBus.close() would cause the CAN controller to become
+                    unresponsive until after a reboot
+
+   Since      : 1.0
+
+   Description: Controller was reset inproperly in some circumstances.
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : TINIOS.enableSerialPort1(true) would not reenable the DS2480
+                one wire code when serial 1 was released.
+
+   Since      : 1.02p1
+
+   Description: N/A
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : CommPortOwnershipListener and related methods did not work
+                properly across processes.
+
+   Since      : Beta
+
+   Description: N/A
+
+   Solution   : Fixed.
+
+ -=============-
+
+   Problem    : Loading a properties file with java.util.Properties
+                throws an ArrayIndexOutOfBoundsException.
+
+   Since      : Beta 3
+
+   Description: This problem only occurred when a key was not
+                followed by a value. For example "my.property="
+                on a line by itself would cause the exception to
+                be thrown.
+
+   Solution   : Added a check for this case in Properties.java.
+
+ -=============-
+
+   Problem    : com.dalsemi.TINIOS.getCurrentUID() always returns 0x80.
+
+   Since      : Beta 3
+
+   Description: The default owner for Bank 7 application was 0.
+                Slush required root privileges to execute properly
+                so the method was set to always return an admin UID.
+
+   Solution   : The default owner for the Bank 7 application is now
+                0x80. Other processes will now query the current
+                shell for their current UID.
+
+-=============-
+
+   Problem    : Date parsing of Strings did not match Sun's functionality.
+
+   Since      : Beta
+
+   Description: Date.parse() would not fail when it was supposed to, and
+                sometimes interpreted a date string incorrectly.
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : Some Slush commands would throw an ArrayIndexOutOfBounds
+                exception when incorrect/incomplete arguments were given.
+
+   Since      : 1.02p1
+
+   Description: GetOpt would sometimes move on to the next argument without
+                making sure there was a next argument.
+
+   Solution   : Change to always check to make sure that the next argument
+                exists. Also added support for 'instant failure', if GetOpt
+                runs into a character or argument it doesn't know what to do
+                with, if the format string used to create GetOpt starts with
+                a '!', it fails on this argument. Default behaviour is to
+                leave the argument for the application.
+
+-=============-
+
+   Problem    : An OutputStreamWriter wrapped around an HTTPOutputStream
+                would not write all of its data.
+
+   Since      : Beta
+
+   Description: OutputStreamWriter flushes when its buffer is full, but when
+                an HTTPOutputStream is flushed, it also closes.
+
+   Solution   : Changed OutputStreamWriter to just write to the underlying
+                stream, and not flush until told to do so.
+
+-=============-
+
+   Problem    : Source would cough up an "ERROR:Unknown Command" on blank
+                lines of scripts.
+
+   Since      : Beta
+
+   Description: Source did not check for empty lines.
+
+   Solution   : Source now checks for empty lines before trying to execute
+                them.
+
+-=============-
+
+   Problem    : FTPSessions in passive mode would leave lingering
+                ServerSockets forever.
+
+   Since      : Beta
+
+   Description: Since FTPSessions are part of the init process, they never
+                clean up those server sockets, and we weren't closing them
+                after a connection was made.
+
+   Solution   : Close the passive server socket after a connection is made.
+
+-=============-
+
+   Problem    : Gregorian Calendars would not set a date correctly in March
+                of a leap year.
+
+   Since      : Beta
+
+   Description: Gregorian Calendar calculates the number of days in a year
+                before many of its other calculations. We add 1 to the
+                calculated number of days in a year if its a leap year AND
+                its past february, but since Java uses funky 0==January
+                month offsets, we accidentally checked if it was later than
+                March.
+
+   Solution   : Change to compare the month to later than February.
+
+-=============-
+
+   Problem    : Gregorian Calendar is slow
+
+   Since      : Beta
+
+   Description: The main calculations use floats and longs.
+
+   Solution   : Tried to replace these calculations with long/int
+                calculations where testing revealed the calculations would
+                be the same result.
+
+-=============-
+
+   Problem    : Lots of code duplication between ChartoByteUTF,
+                DataOutputStream, DataInputStream, and RandomAccessFile
+
+   Since      : Beta
+
+   Description: DataOutputStream and RandomAccessFile use almost the exact
+                same UTF8 transaltion code, which is only slightly different
+                than the CharToByteUTF transaltion code. Added a method in
+                ChartoByteUTF that allows it to do real-UTF (0 transaltes to
+                1 byte) or java-modified UTF (0 translates to 2 bytes).
+                Also added a method in ChartoByteUTF that RandomAccessFile
+                and DataOutputStream could share. Also, RandomAccessFile,
+                DataOutputStream, and DataInputStream were doing lots of
+                packing of byte arrays to and from longs, ints, doubles, etc.
+                that is better performed now with methods in the
+                com.dalsemi.system.ArrayUtils class.
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : The slush 'Source' command makes it hard to do any infinite
+                loop scripts and stuff.
+
+   Since      : Beta
+
+   Description: It could use some scripting power.
+
+   Solution   : Added some scripting functionality. The following are
+                supported:
+                  1. Executes a line forever.
+                     WHILE TRUE
+                       normal-command-line
+                  2. Executes a line a set number of times.
+                     FOR <int>
+                       normal-command-line
+                  3. Compound statements can be used in place of
+                     "normal-command-line".
+                     WHILE TRUE
+                     {
+                       do-something-1
+                       do-something-2
+                       do-something-3
+                     }
+                  4. Command line parameters.
+                     java echo.tini $1 $2 $3 $4 $5
+                     Parameters which do not exist will be replaced with "".
+
+-=============-
+
+   Problem    : HTTP headers were not being treated as case-insensitive.
+
+   Since      : Beta
+
+   Description: com.dalsemi.protocol.HeaderManager uses a String.equals()
+                comparison.
+
+   Solution   : It now uses String.equalsIgnoreCase()
+
+-=============-
+
+   Problem    : Telnet death.
+
+   Since      : Beta
+
+   Description: Some telnet death seems to be related to synchronization, so
+                several methods in Session, Server, TelnetSession, and
+                TelnetServer are now synchronized. Also, make a Session bail
+                out if any java.lang.Throwable bubbles up to the run() loop.
+                Also, sometimes it takes a while for Threads to die from the
+                time they first report an IOException, so added more checks
+                to make sure Telnet is still alive (checking its
+                PrintStream.checkError() method) and capturing errors in the
+                TelnetInputStream.
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : Using serial port 1 corrupts data and causes random
+                system behavior.
+
+   Since      : 1.0
+
+   Description: Opening and using serial port 1 causes a scrog of
+                system data.
+
+   Solution   : No longer writing to memory I don't own.
+
+-=============-
+
+   Problem    : Optional PPP slush command does not reflect changes to
+                PPP API.
+
+   Since      : 1.02p1
+
+   Description: Optional PPP slush command does not reflect changes to
+                PPP API.
+
+   Solution   : PPP command source has been updated.
+
+-=============-
+
+   Problem    : Transferring large amounts of data over a TCP connection
+                over a slow (or congested) link results in incomplete transfers.
+
+   Since      : Alpha
+
+   Description: N/A
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : Some events on external serial ports caused random
+                behavior of the system.
+
+   Since      : 1.02p1
+
+   Description: When an external serial event fired, it might wake up
+                the wrong threads.
+
+   Solution   : Wake up correct thread
+
+ -=============-
+
+   1.02p1
+   -=====-
+-=============-
+
+   Problem    : Native libraries must exist in TINI's file system.
+
+   Since      : Beta 3
+
+   Description: Requiring native libraries to exist in the file system,
+                makes recovery from file system damage difficult.
+
+   Solution   : Native libraries (.tlib files) can now be attached to any
+                application (.tini or .tbin files) using TINIConvertor.
+                See Native_Methods.txt for details.
+
+-=============-
+
+   Problem    : Slush password hashes were insecure--created by appending
+                the password to the username.
+
+   Since      : Beta
+
+   Description: This is insecure because username 'root', password 'tini'
+                hashes to the same result as 'roott', 'ini' does. An attacker
+                could guess the password in linear time.
+
+   Solution   : Hash (username + ":" + password)
+
+-=============-
+
+   Problem    : The AddUser command in Slush checked to see if a user
+                existed in the password file by using the String.startsWith()
+                method on each line of the password file.
+
+   Since      : Beta
+
+   Description: This is a problem if a user "user_admin" existed, and you
+                wanted to create a user named "user". The operation would fail.
+
+   Solution   : Parse the password from the file entry, compare using the
+                String.equals() method.
+
+-=============-
+
+   Problem    : Time zones reported by the "date -t" method were
+                undescriptive.
+
+   Since      : Beta
+
+   Description: TINI supports several time zones, but the Date command only
+                reported their names, and none of their characteristics.
+
+   Solution   : Changed the command to also print out time zone offsets, and
+                whether or not the time zone uses Daylight Savings Time.
+
+-=============-
+
+   Problem    : BufferedReader would not accept '\r' as an end of line
+                character.
+
+   Since      : Beta
+
+   Description: In environments where only the '\r' character is reported
+                for the end-of-line, this would cause BufferedReader to wait
+                for another end-of-line character. The data reported by
+                BufferedReader.readLine() would then be 'delayed' by a line.
+
+   Solution   : Change to recognize '\r' as an acceptable end-of-line
+                character.
+
+-=============-
+
+   Problem    : Boot state information introduced to the API.
+
+   Since      : N/A
+
+   Description: N/A
+
+   Solution   : The StatsCommand has been updated to report all boot state
+                information, such as occurrances of heap clear and file system
+                modification.
+
+-=============-
+
+   Problem    : The getOffset() method of SimpleTimeZone reported incorrect
+                values.
+
+   Since      : Beta
+
+   Description: In CST/CDT, TINI thought Thursday, October 19 was not in
+                Daylight Savings time, but the 18th and 20th were. In
+                addition, TINI ended DST one week early (on October 22nd).
+                Further testing revealed more inconsistencies with Sun's
+                implementation.
+
+   Solution   : Fixed it, and then tested against Sun's implementation
+                thoroughly. TimeZones supported by TINI now report the
+                correct offset from GMT.
+
+-=============-
+
+   Problem    : SystemInputStream.available() reported incorrect values.
+
+   Since      : Beta
+
+   Description: SystemInputStream would report how much data had been
+                buffered, which is not equivalent to the amount of data that
+                is available. Only data that has been followed by and
+                end-of-line sequence or the end-of-stream is available
+                (except in raw mode).
+
+   Solution   : Rewrite SystemInputStream to track the amount of data
+                available to the application.
+
+-=============-
+
+   Problem    : java.lang.Double was still unaccurate and slow, but it was
+                also huge.
+
+   Since      : Beta
+
+   Description: parseDouble() would recognize special values like
+                "inifinity" and "NaN", which the Sun implementation did not
+                do. Values such as 1.23E-300 would print as "1.23E-3",
+                dropping the trailing zeroes.
+
+   Solution   : Rewrote the toString() and parse(String) algorithms to be
+                simpler, faster, and more accurate.
+
+-=============-
+
+   Problem    : If someone (like Tom) accidentally typed 'source
+                TiniHttpServer.tini' in at the shell, he would see huge
+                stream of binary data spew with messages that these were all
+                unknown commands.
+
+   Since      : Beta
+
+   Description: The source command is meant to be run on scripts. If you
+                run it on a TINI file, it doesn't know that the non-ASCII
+                characters mean this file is not a script.
+
+   Solution   : Check the file first for non-ASCII (> 0x07F) characters and
+                abort if it finds any. This could be time consuming if you
+                have a large script file to run, so this check can be
+                disabled with the new '-d' switch to the source command.
+
+-=============-
+
+   Problem    : Trying to set the date to anything later than the 25th of
+                the month through TINI's com.dalsemi.system.Clock class
+                (using a long count of milliseconds to set the date) would
+                not work. After the data was written and re-read from the
+                clock, TINI would report the date as the 1st.
+
+   Since      : Beta
+
+   Description: The algorithm we were using would come up with a negative
+                day of the month if the millisecond being parsed was after
+                the 25th day of the month. When this value was sent to the
+                method that actually wrote values into the clock, it was
+                bounds-checked to 1.
+
+   Solution   : Correct the algorithm to accept any day of the month.
+
+-=============-
+
+   Problem    : HTTP POST's through the URLConnection classes did not
+                properly send out any headers before POSTing the data.
+
+   Since      : Beta
+
+   Description: Before the InputStream is returned to the calling program,
+                the URLConnection should send any headers the user wants
+                sent through the OutputStream to the URL. This was not
+                happening.
+
+   Solution   : Send the headers before giving the outputstream to the
+                calling program.
+
+-=============-
+
+   Problem    : TINIOS.serExternalSerialPortEnable method did not enable
+                the port unless it was called for both external ports.
+
+   Since      : Beta
+
+   Description: This was due to a bug in the native method that enabled the
+                ports.
+
+   Solution   : Fixed the method to enable the requested external port.
+
+-=============-
+
+   Problem    : Calling close on an external serial port or remove on an
+                ExternalInterruptEventListener could cause TINI to reboot
+                or other form of death or data destruction.
+
+   Since      : Beta
+
+   Description: This was a bug in the external interrupt driver which used
+                an uninitialized index to remove a port or listener from
+                the external interrupt ISR chain.
+
+   Solution   : Driver now indexes properly into the ISR chain on removal.
+
+-=============-
+
+   Problem    : Internal serial ports consumed memory on repeated open
+                and closes.
+
+   Since      : Beta
+
+   Description: Driver failed to free a handle on close.
+
+   Solution   : Driver now frees all memory on close.
+
+-=============-
+
+   Problem    : java.lang.Math.sqrt returned incorrect results.
+
+   Since      : Beta
+
+   Description: This was due to a bug in the native sqrt method.
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : TINIExternalAdapter onewire adapter would not work correctly
+                with alarming DS1994 parts.
+
+   Since      : Beta 2
+
+   Description: DS1994 parts have a special alarm mode that could cause
+                problems communicating with other 1-Wire devices on the
+                network.
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : TINIExternalAdapter did not support programming pulse
+
+   Since      : Beta 3
+
+   Description: EPROM 1-Wire parts require a 12V programming pulse
+                for write operations. TINI did not support this
+                feature, and therefore could not program EPROM devices.
+
+   Solution   : Added support for programming pulse.
+
+-=============-
+
+   Problem    : TINIExternalAdapter and TINIInternalAdapter getSpeed() method
+                would return incorrect results.
+
+   Since      : 1.01
+
+   Description: N/A
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : TINIInternalAdapter searches can miss some devices.
+
+   Since      : Beta 3
+
+   Description: In very rare cases, the internal 1-Wire search could miss
+                some devices.
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : com.dalsemi.onewire.util.Address.getAsString() is slow
+
+   Since      : 1.01
+
+   Description: N/A
+
+   Solution   : Now three times faster.
+
+-=============-
+
+   Problem    : CanBus.receiveFramesAvail() returned incorrect values
+
+   Since      : 1.01
+
+   Description: N/A
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : I2C module was not correctly performing the stop condition
+
+   Since      : 1.01
+
+   Description: N/A
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : InetAddress returns localhost hostname incorrectly
+
+   Since      : 1.01
+
+   Description: InetAddress would return "localhost" as the hostname in
+                instances when the address was not 127.0.0.1.
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : The system clock drifts slow over time.
+
+   Since      : Beta 3
+
+   Description: The system clock is the internal time source used for timeouts,
+                thread swaps, process swaps, system uptime, and other similar
+                time related systems. The system clock was drifting slower than
+                wall clock time which caused Thread.sleep() calls to take longer
+                than necessary to wake up, and also gave incorrect uptime
+                figures.
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : DataPort FIFO read/write operations to CE space are much slower
+                than sequential.
+
+   Since      : Beta 3
+
+   Description: N/A
+
+   Solution   : Fixed, about 3 times faster.
+
+-=============-
+
+   Problem    : TINIOS.reboot() would fail to reboot TINI.
+
+   Since      : 1.01
+
+   Description: N/A
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : TINIConvertor does not allow multiple directories to be
+                specified.
+
+   Since      : 1.01
+
+   Description: Using the -f option with multiple directories, or a mixture of
+                directories and files would fail with exceptions.
+
+   Solution   : Fixed, user can specify any number of directories, ZIP files,
+                class files, and jar files on the command line.
+
+-=============-
+
+   Problem    : ByteArrayOutputStream is slower than it should be.
+
+   Since      : 1.01
+
+   Description: N/A
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : CommPortIdentifier.isCurrentlyOwned returns false if port is
+                owned by another process.
+
+   Since      : Beta
+
+   Description: N/A
+
+   Solution   : Fixed.
+
+-=============-
+
+   Problem    : DHCP with WINNT 4.0 DHCP servers.
+
+   Since      : 1.01
+
+   Description: WinNT dhcp server would not respond to discover messages from
+                TINI. Packets were one byte too long
+
+   Solution   : Packet lengths were reduced.
+
+-=============-
+
+   Problem    : DHCP using different networks.
+
+   Since      : 1.01
+
+   Description: TINI would attempt to claim last known ip and due to stale
+                settings would never properly initiate a new discover message
+                and hence without a B18 F0 or a release (ipconfig -r -f) on the
+                previous network, TINI would never get a new dhcp ip.
+
+   Solution   : Bugs fixed in DHCPClient.java. Tested using our
+                network server and win NT server on a separate network.
+
+-=============-
+
+   Problem    : SMTP Client would not work properly with multiline responses
+                from the server.
+
+   Since      : 1.01
+
+   Description: SMTP Client only expected single line responses, causing
+                failure with some SMTP servers.
+
+   Solution   : com/dalsemi/protocol/mailto/Connection.java was changed to allow
+                multiline responses from an SMTP server.
+
+-=============-
+
+   Problem    : Certain large write operations on SocketOutputStream
+                objects cause an IOException.
+
+   Since      : 1.0
+
+   Description: N/A
+
+   Solution   : The IOException was generated by a false validation
+                error in the socket layer. This has been fixed for 1.02.
+
+-=============-
+
+   Problem    : The ethernet driver doesn't play nicely with Java code
+                wanting to peek at the controller's register contents.
+
+   Since      : Alpha
+
+   Description: N/A
+
+   Solution   : The ethernet driver has been modified to allow
+                application code to safely read status registers.
+
+-=============-
+
+   Problem    : When too many sockets are created, the last underlying
+                TCP connection is not released when the process terminates.
+
+   Since      : 1.0
+
+   Description: N/A
+
+   Solution   : The socket layer allowed 1 too many sockets to be
+                created. This is fixed in 1.02.
+
+-=============-
+
+   Problem    : The getBoolean method in class java.lang.Boolean is not
+                static. It should be.
+
+   Since      : Beta
+
+   Description: N/A
+
+   Solution   : getBoolean has been changed to static in 1.02.
+
+-=============-
+
+   Problem    : Writing to a closed socket results in either an
+                InterruptedIOException or a SocketException instead of an
+                IOException.
+
+   Since      : Beta
+
+   Description: N/A
+
+   Solution   : This has been fixed in 1.02. Writing to a closed socket
+                will result in an IOException being thrown.
+
+-=============-
+
+   Problem    : The javax.comm.SerialPort DATA_AVAILABLE event fires multiple
+                times for the same data if the data is not read in the event
+                listener.
+
+   Since      : Beta
+
+   Description: According to the javadocs for this event - This event will be
+                generated once when new data arrive at the serial port. Even
+                if the user doesn't read the data, it won't be generated again
+                until next time new data arrive.
+
+   Solution   : This event now fires only when new data arrives.
+
+-=============-
+
+   Problem    : TINI reboots when File.list() is called simultaneously
+                on the same file.
+
+   Since      : Beta 3.0
+
+   Description: If the ls command is executed from two different sessions at
+                the same time, TINI will reset itself and some of the files
+                could be lost.
+
+   Solution   : A bug was found and fixed in the firmware.
+
+-=============-
+
+   Problem    : Loss of power during file operations can corrupt the
+                file system.
+
+   Since      : N/A
+
+   Description: Any modifications to the file system could be interrupted by
+                loss of power or by a reset. If the file system was in the
+                middle of critical change, portions of the file system could
+                become corrupt. The file system is "fixed" during the reboot
+                routines, but sometimes at the cost of losing many files.
+
+   Solution   : The file system was changed to handle loss of power. When TINI
+                resets, any critical operations are completed if possible. If
+                not, the file system will be reset to its previous state.
+
+-=============-
+
+   Problem    : File.list() for directories with more than 254 files is
+                broken.
+
+   Since      : Beta 3.0
+
+   Description: Directories cannot hold more than 254 files. Older versions of
+                TINI firmware allow you to add more than that, but fail when
+                trying to perform a listing.
+
+   Solution   : TINI will not allow more than 254 files in a single directory.
+                An IOException is thrown instead.
+
+-=============-
+
+   Problem    : Serial port input buffers were not resizeable
+
+   Since      : Beta
+
+   Description: Unable to resize the input buffers for the serial ports.
+
+   Solution   : Serial port input buffers can now be resized through javax.comm
+
+-=============-
+
+   Problem    : Available method does not return all available bytes on
+                the port.
+
+   Since      : 1.0
+
+   Description: Calling the available method on the serial ports does
+                not return all available bytes.
+
+   Solution   : Now returns all available bytes.
+
+-=============-
+
+   Problem    : New support for enabling RTS/CTS flow control for the
+                internal serial ports.
+
+   Since      : 1.02
+
+   Description: This method must be called to enable RTS/CTS flow control for
+                the internal serial ports. Only one of the internal serial
+                ports may have RTS/CTS flow enabled at a time. If the
+                method is called and RTS/CTS is already enabled on the
+                other internal port, then a
+                javax.comm.UnsupportedCommOperationException will be thrown.
+
+   Solution   : public native static boolean
+                setRTSCTSFlowControlEnable(int portNumber, boolean enable)
+                   throws javax.comm.UnsupportedCommOperationException;
+
+-=============-
+
+   Problem    : New support for checking if RTS/CTS flow control is
+                enabled on a given internal port.
+
+   Since      : 1.02
+
+   Description: This method returns whether RTS/CTS flow control is
+                enabled on a given internal port.
+
+   Solution   : public native static boolean
+                getRTSCTSFlowControlEnable(int portNumber);
+
+-=============-
+
+   Problem    : CanBus does not throw exceptions on read/write when
+                bus errors occur.
+
+   Since      : TINI 1.0
+
+   Description: N/A
+
+   Solution   : Exceptions will now be thrown for all bus errors
+
+-=============-

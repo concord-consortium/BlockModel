@@ -1,0 +1,138 @@
+Limitations.txt (DC, 09.14.01)
+
+-=---------------=-
+TINI Firmware 1.02c
+-=---------------=-
+--------------------------------------------------------------------
+Go to http://www.ibutton.com/TINI/book.html for an online version of 
+"The TINI Specification and Developer's Guide".
+--------------------------------------------------------------------
+
+This file documents some of the current limitations of TINI.  This is not a
+comprehensive list, but does contain most of the items of greatest interest.
+
+Current Limitations
+-=================-
+- Loader
+    Does not support baud rates below 19200.
+
+- MulticastSocket
+    Only 1 local interface can send and receive on a given group.
+
+- TINI does not support IP datagram fragmentation/reassembly.
+
+- TINI has 24 total allowed socket connections.
+
+- TINI does not support IP layer routing.
+
+- TINI currently supports only a subset of reflection. Class.forName(),
+  newInstance(), etc. are supported, but java.lang.reflect.Array, Constructor,
+  Field, etc. are not yet supported. See API_Diffs.txt for a full list of
+  non-supported classes and methods.
+
+- TINI does not currently support serialization.
+
+- printStackTrace() is only partially supported. The fully qualified
+  exception name will be printed, but not the method stack list. The full
+  method names do not currently exist in the .tini files.
+
+- Native modules can't be larger than 64k.
+
+- The maximum size of any array is 64k.
+
+- TINI OS limits the number of processes to 8, with 16 threads per Java
+  process. One process is consumed by the sweeper. The application 
+  (typically slush) is the 2nd OS process created and the 1st process
+  running the JVM.
+
+- There is a limitation of 63 stack cells for local variables. 32 bit
+  bit variables (such as int, char, byte, etc) take up 1 stack cell. 64 bit
+  variables (long, double) take 2.
+
+- There is a limitation of 768 stack cells per Thread. 
+
+- A class file is limited to 255 static fields (including all super classes'
+  static fields) and 255 instance fields (including all super classes'
+  instance fields).
+
+- All threads run at the same priority. Thread.setPriority() will not throw
+  an exception, but will not change the runtime priority of that thread.
+
+- A class file is limited to 127 methods (including all super classes' methods,
+  excluding native methods). A class file is limited to 255 native methods.
+
+- A method is limited to 63 local variables.
+
+- Only 2 ByteToChar (and CharToByte) are supported by default: UTF8, and
+  ISO_8859_1. Others can be added by users in their Java programs.
+
+- Only the default Locale is supported. Others can be added by users in their
+  Java programs.
+
+- Each converted class file can't be larger than 32k.
+
+- PPP
+    Dial on demand is not currently supported.  
+
+    These methods are not currently supported:
+      get/setIdleTimeout().
+
+- 1-Wire
+    2480 is not supported on ports other than serial1.
+
+- String's intern() method returns incorrect results. A VM level hashtable
+  has been added for String literals.
+
+- TINI DHCP doesn't work with some DHCP servers. Known incompatibilies from
+  the past: vDHCP, MagikDHCP, and Umax Ugate 3000 ADSL-sharing device.
+
+- Directories can only hold 254 files. Attempting to add more will result in 
+  an IOException.
+
+- An IOException will be thrown when attempting to create files with names 
+  longer than 247 characters.
+
+- The last modified time for files may not be correct if the TINI is reset 
+  during file system changes. The time reported could be the file's previous 
+  last modified time.
+
+- Cannot open a "rw" RandomAccessFile for a file that has been executed. An 
+  IOException will be thrown from the constructor. This is also the case for a
+  FileOutputStream with the append flag set to true.
+
+- The method Date.toLocaleString() returns the same thing as
+  Date.toString().  This is because TINI does not support any of the date
+  formatting classes.
+
+- Dates representing times before January 1, 1970 will not return correct
+  values for their fields, either through a Calendar object or through a Date
+  object.
+
+- The methods Double.toString() and Double.valueOf(String) (and the associated 
+  methods in the Float class) do not return correct values.  The formatting
+  code and the String parsing code for floating point numbers is as accurate 
+  as possible given limitations on API space and processor speed.  Floating 
+  point numbers may often be printed slightly incorrectly as Strings.  For 
+  instance, the code:
+       System.out.println(3.05f);
+  may produce the String "3.0499999".
+  Note that floating point calculations are not affected by this statement, 
+  only conversions from a String to a floating point number or from a 
+  floating point number to a String.
+
+- The static initializers for all classes will be run even if the class
+  is never referenced.
+
+- Classes that have circular references in the static initializers will
+  not produce results that are consistent with the Java Language
+  Specification.  The static initializers will be sorted as needed, but
+  circular references cannot not be resolved and TINIConvertor will report
+  an error with the offending classes.  The actual ordering of the
+  initializers in the TINI executable in this situation will vary.
+
+- When using a com.dalsemi.shell.server.SystemInputStream directly,
+  reading one character in non-raw mode will cause the rest of the data
+  currently in the stream's buffer to be parsed for backspaces, even if the
+  rest of the data is to be read in raw mode.  
+
+-=================-

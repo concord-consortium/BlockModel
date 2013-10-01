@@ -1,0 +1,154 @@
+API_Changes.txt (DC, 09.14.01)
+
+-=---------------=-
+TINI Firmware 1.02c
+-=---------------=-
+--------------------------------------------------------------------
+Go to http://www.ibutton.com/TINI/book.html for an online version of 
+"The TINI Specification and Developer's Guide".
+--------------------------------------------------------------------
+
+      See Changes.txt for changes to the TINI firmware.
+
+      See Limitations.txt for a partial list of current limitations.
+
+      See JavaDocs at ftp://ftp.dalsemi.com/pub/tini/ for details on the
+      com.dalsemi and com.dalsemi.onewire package trees. 
+
+      See JavaDocs at http://java.sun.com for details on the standard JDK
+      packages and javax.comm.
+
+Significant Changes
+-=================-
+   1.02c
+   -====-
+- Added method arraycopy(Object,int,Object,int,int) to
+  com.dalsemi.system.ArrayUtils. This is actually the native method that is
+  called from System.arraycopy, but so that developers can remove the one
+  method call (and keep some speed) if they know their array types are valid
+  for this method.
+- In com.dalsemi.protocol.BasicClient, added constructor
+  BasicClient(String,int,int) that allows you to set a timeout for the control
+  socket.
+- In com.dalsemi.protocol.BasicClient, made static final int
+  DEFAULT_SOCKET_TIMEOUT public so that subclasses can access it.
+- In com.dalsemi.protocol.ftp.FTPClient, added constructor
+  FTPClient(String,int,int) that allows you to set a timeout for the control
+  socket.
+
+   1.02
+   -===-
+- Added the getEthernetStatus method to com.dalsemi.tininet.TININet
+- Methods in com.dalsemi.tininet.TININet createIPString and
+  createIPFromString have been made public so they can be shared by the
+  java.net classes and any other application needing such methods.
+- com.dalsemi.system.TINIOS.killTask(int taskID) has changed from int to void 
+  return. It throws an IllegalArgumentException if taskID is invalid.
+
+   1.02p2
+   -=====-
+- The java.net.Socket.setTcpNoDelay method is no longer an air ball. It
+  may be used to enable or disable the use of Nagle's algorithm for the
+  underlying connection.
+
+   1.02p1
+   -=====-
+- The com.ibutton package hierarchy has been changed to com.dalsemi.onewire. 
+  These changes will be listed in 1-Wire_Changes.txt.
+
+- Internal serial ports serial0, serial1, and external serial ports serial2 
+  and serial3 have been changed extensively to support more of the optional 
+  features in javax.comm. These *new* features include:
+  - supported javax.comm.SerialPort methods:
+    - sendBreak and
+    - setRcvFifoTrigger (external only).
+  - supported javax.comm.SerialPort events:
+    - notifyOnOutputEmpty,
+    - notifyOnCTS,
+    - notifyOnDSR, (external only)
+    - notifyOnRingIndicator, (external only)
+    - notifyOnCarrierDetect,
+    - notifyOnOverrunError,
+    - notifyOnParityError,
+    - notifyOnFramingError (external only) and
+    - notifyOnBreakInterrupt (external only).
+  - supported javax.comm.CommPort methods:
+    - setInputBufferSize.
+  - RTS/CTS flow control is now supported on all serial ports.
+    - Flow control on the internal serial ports can be used on
+      serial0 or serial1 but not both at the same time.
+    - Hardware flow control requirements for internal serial ports:
+      - TINI Rev. D or greater, 72 pin.
+      - TINI Socket E-series Rev. C or greater, 72 pin.
+      - Other Socket boards compatible with TINI Rev. D or greater 
+        hardware flow control circuit.
+  - FIFOS are now fully supported by the external serial ports reducing
+    CPU load for streaming serial data.
+
+- The class com.dalsemi.shell.server.GetOpt has been completely rewritten.
+  The new version has only three methods - a constructor, String optArgGet()
+  and int getopt(). The functionality is the same as the previous version
+  with respect to the needs of Slush. The documentation for this class has
+  examples of use and an explanation of functionality. The class was
+  rewritten to conserve space in the API.
+
+- com.dalsemi.system.Security.hashMessage(String) was changed to
+  com.dalsemi.system.Security.hashMessage(byte[]). The first thing the method
+  did previously was call String.getBytes().
+
+- com.dalsemi.system.Security.hashMessage produced a digest that did not 
+  conform to FIPS 180-1. The digest was reversed on 4-byte boundaries. This
+  method now conforms to FIPS 180-1.
+
+- java.lang.Thread.join is now supported.
+
+- The class com.dalsemi.system.ExternalInterrupt has two new methods:
+  - public static void setTrigger(boolean edgeTrigger,
+                                  ExternalInterruptEventListener owner) 
+      throws ExternalInterruptException 
+  - public static boolean getTrigger().
+
+- A new flag denoting filesystem fixups has been added to TINIOS.getBootState()
+
+- com.dalsemi.system.BytePort class has been added to allow bytewide access to
+  Port 5 on the 80C390.
+
+- The real time clock (RTC) code has been updated to work with the new TINI 
+  Model 390 Rev D board clock layout.
+
+- TINIOS.getTINIHWVersion() method added to TINIOS to retrieve the hardware 
+  version string
+
+- com.dalsemi.system.DataPort and com.dalsemi.system.I2C
+  static variables:
+  STRETCH2, STRETCH3,... STRETCH12 
+  changed to:
+  STRETCH0, STRETCH 1,... STRETCH10.
+
+- class com.dalsemi.tininet.TININet
+  - changed the parameter "dhcp" in the setOptions method from a String to a 
+    byte array to be consistant with the remaining 7 parameters.
+
+- class com.dalsemi.tininet.PPPEvent
+  - changed constructor to PPPEvent(PPP srcPPP, int eventType, intError) 
+    to accommodate new error code functionality.
+  - removed methods getNewValue and getOldValue as they provided no 
+    functionality
+  - added getLastError method to retrieve error
+
+  - class com.dalsemi.tininet.PPP
+    - the following methods now take integer instead of byte as an argument
+      setRestartPeriod, setMaxConfig, setMaxFailure
+    - the following methods now return an integer instead of byte
+      getRestartPeriod, getMaxConfig, getMaxFailure
+    - the following method have been removed
+      setIdleTimeout, getIdleTimeout, setProxyARP, getProxyARP, setMRU, getMRU
+    - the method String getPeerID() has been added
+    - the method String getPeerPassword() has been added
+    - the method getUsernamePassword has been deprecated in favor of the new
+      getPeerID and getPeerPassword methods.
+
+- com.dalsemi.comm.CanBusException now has a new method getReason()
+  to allow programatic determination of the bus error.
+
+-=============-

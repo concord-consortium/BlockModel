@@ -1,0 +1,337 @@
+1-Wire_Changes.txt (DC, 09.14.01)
+
+-=---------------=-
+TINI Firmware 1.02c
+-=---------------=-
+--------------------------------------------------------------------
+Go to http://www.ibutton.com/TINI/book.html for an online version of 
+"The TINI Specification and Developer's Guide".
+--------------------------------------------------------------------
+
+      See API_Changes.txt for changes to the com.dalsemi API.
+      
+      See Changes.txt for changes to the TINI firmware.
+
+      See Limitations.txt for a partial list of current limitations.
+
+      See JavaDocs at ftp://ftp.dalsemi.com/pub/tini/ for details on the
+      com.dalsemi and com.dalsemi.onewire package trees. 
+
+      The TINIWebServer example has been modified to use 
+      these new 1-Wire classes. Please refer to it as a simple example 
+      of how to use the new 1-Wire API.
+
+TINI Firmware 1.0 to 1.01 1-Wire API Changes 
+-===========================================-
+
+- The changes to the 1-Wire API are almost entirely cosmetic.  The 
+  root package supporting 1-Wire has moved and method names have 
+  changed.  The functionality is the same.  The reason for this 
+  change was to replace a particular 1-Wire device package type 
+  (iButton) with the more generic 1-Wire (OneWire).  
+
+  - The root of the package hierarchy has been changed from
+       com.ibutton
+    to
+       com.dalsemi.onewire
+
+
+  - The following class names have also been changed.  Note that the 
+    old and new base package names have been left off ('com.ibutton' 
+    for old names and  'com.dalsemi.onewire' for new names).
+
+      Old Class                             New Class
+    ----------------------------------------------------------------
+    iButtonAccessProvider                 OneWireAccessProvider
+    iButtonException                      OneWireException
+    container.iButtonContainer            container.OneWireContainer
+
+
+  - The following method names have been changed in the indicated
+    classes.  Note that some of these methods are overloaded.
+
+        Old Method                            New Method
+       -------------------------------------------------------------
+    - CLASS: container.OneWireContainer (and extended classes)
+
+       getiButtonPartName                    getName
+
+    - CLASS: adapter.DSPortAdapter (and extended classes)
+
+       findFirstiButton                      findFirstDevice
+       findNextiButton                       findNextDevice
+       getAlliButtons                        getAllDeviceContainers
+       getContainer                          getDeviceContainer 
+       getFirstiButton                       getFirstDeviceContainer
+       getNextiButton                        getNextDeviceContainer
+       registeriButtonContainerClass         registerOneWireContainerClass
+       setSearchAlliButtons                  setSearchAllDevices  
+       setSearchOnlyAlarmingiButtons         setSearchOnlyAlarmingDevices         
+
+
+- The class com.dalsemi.onewire.OneWireAccessProvider has three new methods
+  - static DSPortAdapter getAdapter(String adapterName, String portName) 
+  - static DSPortAdapter getDefaultAdapter() 
+  - static String getProperty(String propName) 
+
+
+1-Wire API Changes 0.00 to 0.02p2
+-================================-
+
+Global
+-=============-
+Problem    :  The JAVA docs were not complete.
+Since      :  0.00
+Description:
+Solution   :  Added many more comments, examples and hyper links.
+-=============-
+
+### Package: com.dalsemi.onewire
+
+Com.dalsemi.onewire.OneWireAccessPrivider
+-=============-
+Problem    :  1-Wire in use exception in getAdapter and getDefaultAdapter
+              methods.
+Since      :  0.00
+Description:  Get an exception indicating the adapter was in use when
+              calling one of these methods.
+Solution   :  Added a blocking call to beginExclusive and then a call to
+              endExclusive in a `finally' block.
+-=============-
+Problem    :  Could not add user defined adapters.
+Since      :  0.00
+Description:
+Solution   :  Added check in enumerateAdapters method to look in the
+              onewire.properties file for `onewire.register.adapter0' to
+              `onewire.register.adapter15' that indicates a fully qualified class file
+              that is an adapter class to be included in the enumeration.
+-=============-
+
+### Package: com.dalsemi.onewire.container
+
+com.dalsemi.onewire.container.OneWireConatiner.java,
+OneWireContainer04.java, OneWireContainer04.java,
+OneWireConatiner08.java, OneWireConatiner06.java,
+OneWireConatiner0A.java, OneWireConatiner09.java,
+OneWireConatiner0C.java, OneWireConatiner0A.java,
+OneWireConatiner12.java, OneWireConatiner0B.java,
+OneWireConatiner14.java, OneWireConatiner0C.java,
+OneWireConatiner1A.java, OneWireConatiner0F.java,
+OneWireConatiner20.java, OneWireConatiner12.java,
+OneWireConatiner20.java, OneWireConatiner13.java,
+OneWireConatiner20.java, OneWireConatiner14.java,
+OneWireConatiner20.java, OneWireConatiner18.java,
+OneWireConatiner20.java, OneWireConatiner1A.java,
+OneWireConatiner20.java, OneWireConatiner1D.java,
+OneWireConatiner20.java, OneWireConatiner20.java,
+OneWireConatiner20.java, OneWireConatiner21.java,
+OneWireConatiner20.java, OneWireConatiner23.java,
+ -=============-
+Problem    :  Inconsistant operation of getMemoryBanks method.
+Since      :  0.00
+Description:  getMemoryBanks returns a MemoryBank for the 1-Wire Address
+              for these containers but not the others even though all devices have a 1-
+              Wire Address.
+Solution   :  Removed MemoryBank for the 1-Wire Address in the enumeration
+              returned from getMemoryBanks since this information is redundant with
+              Address methods in OneWireContainer and DSPortAdapter.
+-=============-
+
+com.dalsemi.onewire.container.OneWireContainer04.java
+-=============-
+Problem    :  Throws did not match ClockContainer interface on some method.
+Since      :  0.00
+Description:  The following methods needed to have, 'throws
+              `OneWireException' add:  getClockAlarm, setClockAlarm, SetClockRunEnable,
+              setClockAlarmEnable.
+-=============-
+
+com.dalsemi.onewire.container.OneWireContainer12.java
+-=============-
+Problem    :  Changing state of one latch would change state of other.
+Since      :  0.00
+Description:
+Solution   :  Added code in setLatchState and readDevice to only change the
+              state of one latch at a time.
+-=============-
+Problem    :  Could not set the conditional search conditions.
+Since      :  0.00
+Description:
+Solution   :  Added method setSearchConditions
+-=============-
+Problem    :  Poor performance.
+Since      :  0.00
+Description:  Speed checking with the adapter method 'doSpeed' was being
+              performed too often.
+Solution   :  Added method setSpeedCheck(boolean) to enable or disable
+              speed checking.
+-=============-
+Problem    :  More static final bytes added for easier use.
+Since      :  0.00
+Description:
+Solution   :  Define constants for easier reading.
+-=============-
+
+com.dalsemi.onewire.container.OneWireContainer16.java
+-=============-
+Problem    :  Missing constructors to be consistent with other
+              OneWireContainers.
+Since      :  0.00
+Description:
+Solution   :  Added constructors.
+-=============-
+Problem    :  Correct expected run time entries.
+Since      :  0.00
+Description:  Needed to check to make sure the run time parameter being
+              passed was from 0 to 15.
+Solution   :  Created a check to look at the limits of the run time
+              parameter.
+-=============-
+
+com.dalsemi.onewire.container.OneWireContainer1F.java
+-=============-
+Problem    :  If adapter was left in overdrive and then this container's
+              methods were called a communication exception (OneWireIOException) would be
+              thrown indicating device not present
+Since      :  0.00
+Description:  Speed checking was not implemented.
+Solution   :  Added method setSpeedCheck(boolean) to enable or disable
+              speed checking.
+-=============-
+
+com.dalsemi.onewire.container.OneWireContainer1D.java
+-=============-
+Problem    :  getAlternateName doesn't need to be there because it returns
+              and empty string.
+Since      :  0.00
+Description:  getAlternateName returns an empty string.
+Solution   :  Deleted the method in this container.
+-=============-
+
+com.dalsemi.onewire.container.OneWireContainer21.java
+-=============-
+Problem    :  Exceptions listed in throws but never thrown.
+Since      :  0.00
+Description:  getAlarmStatus method throws OneWireIOException and
+              OneWireException, but does not.
+Solution   :  Removed throws statement from the method.
+-=============-
+
+com.dalsemi.onewire.container.OneWireContainer28.java
+-=============-
+Problem    :  Method doTemperatureConvert would not produce good
+              temperature results.
+Since      :  0.00
+Description:
+Solution   :  Utilized the adapters `primed' feature with the adapter
+              startPowerDelivery method to make sure the power is delivered immediately
+              after the next communication byte.
+-=============-
+
+com.dalsemi.onewire.container.JibComm.java
+-=============-
+Problem    :  More information for debugging.
+Since      :  0.00
+Description:
+Solution   :  Created if statements using a static Boolean to change if
+              debug was necessary.
+-=============-
+Problem    :  Correct expected run time entries.
+Since      :  0.00
+Description:  Needed to check to make sure the run time parameter being
+              passed was from 0 to 15.
+Solution   :  Created a check to look at the limits of the run
+              Time parameter.
+-=============-
+
+com.dalsemi.onewire.container.MemoryBankNV.java,
+com.dalsemi.onewire.container.MemoryBankNVCRC.java
+-=============-
+Problem    :  CRC16 not correct.
+Since      :  0.00
+Description:  The CRC16 was being computed on the local page number instead
+              of the absolute page number in the device.
+Solution   :  Changed CRC16 calculation to use the device absolute page.
+-=============-
+
+com.dalsemi.onewire.container.MemoryBankAppReg.java,
+com.dalsemi.onewire.container.MemoryBankEPROM.java,
+com.dalsemi.onewire.container.OTPMemoryBank.java
+(and all classes that implement these interfaces)
+-=============-
+Problem    :  The isPageRedirected() method didn't match JAVA standard
+              naming convention.
+Since      :  0.00
+Description:  The method isPageRedirected() was deprecated.
+Solution   :  To deprecate isPageRedirected() and make a new method
+              getRedirectedPage(), also changed comments for the method.
+-=============-
+
+Classes that implement PagedMemoryBank Interface.
+-=============-
+Problem    :  The haveExtraInfo() method didn't match with JAVA naming
+              standard.
+Since      :  0.00
+Description:  The method haveExtraInfo() was deprecated.
+Solution   :  Deprecate haveExtraInfo() and make a new method
+              hasExtraInfo().
+-=============-
+
+com.dalsemi.onewire.container.MemoryBankAppReg.java,
+com.dalsemi.onewire.container.MemoryBankEE.java,
+com.dalsemi.onewire.container.MemoryBankEPROM.java,
+com.dalsemi.onewire.container.MemoryBankNV.java,
+com.dalsemi.onewire.container.MemoryBankScratch.java
+-=============-
+Problem    :  Offset parameter in writePagePacket method ignored.
+Since      :  0.00
+Description:
+Solution   :  Use offset
+-=============-
+
+com.dalsemi.onewire.container.SHAiButton.java
+-=============-
+Problem    :  No, quick way for TINI to create SHA button objects.
+Since      :  0.00
+Description:  In TINI there was a need to only create allocation for the
+              SHA button and initialize parameters later.
+Solution   :  A new constructor was added with no parameters and a
+              setiButton method was created to initialize the parameters.
+-=============-
+
+Package: com.dalsemi.onewire.utils
+
+com.dalsemi.onewire.utils.OneWireMonitor.java
+-=============-
+Problem    :  killMonitor method returned before Thread death.
+Since      :  0.00
+Description:  Thread would not end before main thread resulting in the
+              application hanging on exit.
+Solution   :  Synchronize setting of the keepRunning flag and then waiting
+              for the thread to die.
+-=============-
+
+com.dalsemi.onewire.utils.Address.java
+-=============-
+Problem    :  Slow manipulation of strings and shifting longs.
+Since      :  0.00
+Description:  There was a faster way to do string addresses and long
+              shifts.
+Solution   :  Changed the address to hex and converted to string after and
+              also changed shifts.
+-=============-
+
+### Examples:
+
+OWDump.java
+-=============-
+Problem    :  com.dalsemi.onewire.container.PagedMemoryBank.haveExtraInfo
+              has been deprecated.
+Since      :  0.00
+Description:  When compiling using haveExtraInfo, warning for deprecation
+              appeared.
+Solution   :  Use hasExtraInfo instead of haveExtraInfo.
+-=============-
+
+           
+

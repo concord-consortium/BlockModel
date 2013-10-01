@@ -1,0 +1,1090 @@
+Slush.txt (DC, 09.14.01)
+
+-=---------------=-
+TINI Firmware 1.02c
+-=---------------=-
+--------------------------------------------------------------------
+Go to http://www.ibutton.com/TINI/book.html for an online version of 
+"The TINI Specification and Developer's Guide".
+--------------------------------------------------------------------
+
+------------------------------------
+|              slush               |
+------------------------------------
+
+------------------------------------
+-=           Contents             =-
+------------------------------------
+
+i.     Introduction
+I.     System Files
+II.    Serial Server
+III.   Telnet Server
+IV.    FTP Server
+V.     Commands
+VI.    Changes
+
+-=--------------------------------=-
+
+
+i. Introduction
+=-------------=
+
+Slush is a small system shell intended to provide a Unix(tm) like interface
+with Serial (TTY), Telnet, and FTP servers.
+
+Slush is less than a full operating system, but more than a simple shell.  It
+provides a way to view and manipulate the filesystem, as well as control system
+functions such as the watchdog timer and network configuration.
+
+The system is designed to be a multi-threaded, multi-user system allowing
+simultaneous login sessions.  Slush uses a username/password combination to
+authenticate a login request.  Users can be added and removed from the system
+by a user with super user privileges.
+
+The slush program is loaded into bank 7 and executed on every TINI boot.
+
+
+I. System Files
+=-------------=
+
+Slush creates several default system files, placing them in the /etc directory:
+.tininet, .startup, and passwd.
+
+The .tininet file contains TINI's hostname and domain name.  The default
+hostname is TINI.  There is no default domain name.
+
+User login information is kept in the /etc/passwd file.  The user's name, hash
+of their password, and user ID is kept here.  Slush has two accounts setup by
+default.  These are: user "root" with the password "tini", and "guest" with the
+password "guest".
+
+The admin can place commands to be run on boot in the /etc/.startup file.  These
+commands will be executed as if they were from from a slush prompt.  Any .tini
+files run (i.e. with the java command) will be forced to run in the background.
+
+The default .startup file looks like:
+    ########
+    #Autogen'd slush startup file
+    setenv FTPServer enable
+    setenv TelnetServer enable
+    setenv SerialServer enable
+    ##
+    #Add user calls to setenv here:
+    ##
+    initializeNetwork
+    ########
+    #Add other user additions here:
+
+If you want to disable any of the servers, comment out the setenv line for that
+server.  You can also set other environment variables for the system and for
+the network servers in the user setenv area.  See the section for each of the
+servers for a list of user-controlled environment variables.
+
+Add lines to run in the user additions section at the end of the .startup file.
+
+You can hit the '5' key when slush begins to boot to bypass the .startup file
+and bring up the Serial server.
+
+
+II. Serial Server
+=---------------=
+
+The Serial Server provides TTY login to the slush system.
+
+  Configurable options with environment variables:
+
+    setenv HISTORY           [size]         - Size of history command buffer.
+    setenv BROADCASTS        [true/false]   - Allow or disallow wall broadcasts.
+                                              Default is true.
+
+  Note: This variable will not take effect until the server is
+        restarted.
+
+A user can create a home directory (i.e. a directory with the same name as the
+user's username) in the root directory.  When the user logs in, they will be
+placed in this directory.  Otherwise, the user is placed in the root directory
+at login.
+
+The user can also place a .login file in their home directory.  Every line in
+this file will be executed as they would from a slush command prompt.
+You can comment out lines by inserting a '#' at the beginning of a line.
+
+Slush is setup by default to use serial0 at 115200.  If you need to change
+the port, or set the speed down to 19200, edit Slush.java.  Change the
+SERIAL_PORT and SERIAL_SPEED and other variables to your needs, and rebuild.
+For help in the build process, see Building_Applications.txt.
+
+III. Telnet Server
+=----------------=
+
+The Telnet server listens on port 23 (the well-known port for Telnet)
+for connection requests, and spawns off sessions to handle each request.
+
+  Configurable options with environment variables:
+
+    setenv TELNET_ALLOW_ROOT [true/false]   - Allow or disallow root to login
+                                              to Telnet.  Default is true.
+    setenv HISTORY           [size]         - Size of history command buffer.
+    setenv TELNET_TIMEOUT    [Number of ms] - Inactivity timeout.  0 is
+                                              infinite.  Default inifinity.
+    setenv TELNET_WELCOME    [file]         - File to display on successful
+                                              login.
+    setenv BROADCASTS        [true/false]   - Allow or disallow wall broadcasts.
+                                              Default is true.
+
+  Note: These variables will not take effect until the server is
+        restarted.
+
+A user can create a home directory (i.e. a directory with the same name as the
+user's username) in the root directory.  When the user logs in, they will be
+placed in this directory.  Otherwise, the user is placed in the root directory
+at login.
+
+The user can also place a .login file in their home directory.  Every line in
+this file will be executed as they would from from a slush command prompt.
+You can comment out lines by inserting a '#' at the beginning of a line.
+
+
+IV. FTP Server
+=------------=
+
+The FTP server listens on port 21 (the well-known port for FTP) for
+connection requests, and spawns off sessions to handle each request.
+
+  Configurable options with environment variables:
+
+    setenv FTP_ALLOW_ROOT [true/false]   - Allow or disallow root to login
+                                           to FTP.  Default is true.
+    setenv FTP_TIMEOUT    [Number of ms] - Inactivity timeout.  0 is
+                                           infinite.  Default inifinity.
+    setenv FTP_ALLOW_ANON [true/false]   - Allow or disallow anonymous login.
+                                           Default is true.
+    setenv FTP_LOG_ANON   [file]         - Log file for anonymous logins.  The
+                                           directory (and the file if it exists)
+                                           must have "other" write permission.
+    setenv FTP_WELCOME    [file]         - File to display on successful
+                                           login.
+    setenv FTP_CONNECT    [file]         - File to display on connection.
+
+  Note: These variables will not take effect until the server is
+        restarted.
+
+
+V. Commands
+=---------=
+
+Slush has several commands built into the default distribution.  You can add
+new commands or remove current commands by editing the Slush.java file and
+recompiling.  Dynamic add and remove of commands is not currently supported,
+but will hopefully be in the future with the addition of more reflection
+support by the system.
+
+Type 'help' at a slush prompt for a list of available commands, and
+'help <command>' for command-specific help.
+
+At the end of this section is a list of optional commands.  The commands are
+not part of the standard slush distribution, but the source is included so that
+you can add them to your slush and rebuilt.  See the optional commands section
+for more information.
+
+Slush allows you to redirect input and output to commands, as well as running
+java programs in the background.  Use the '<' specifier to redirect input from
+a file, the '>' specifier to redirect output to a file, the '>&' specifier to
+redirect stdout and stderr to a file, and '&' to run a java program in the
+background.  Running slush commands in the background other than the java
+command is not currently supported.
+
+In addition to redirecting output to a file, you can redirect output to null
+(e.g. java MyProg.tini > null) to suppress output from this program, or
+redirect the output to the serial port (e.g. java MyProg.tini > S0).  S0
+indicates serial0, and is the only serial port supported for this action.
+You must have admin privileges to redirect to the serial port, and should not
+do this if you are already at a serial server prompt.  Slush will bring down
+the serial server, run the command, then bring it back up on completion.
+
+Examples:
+          To run MyProg.tini in the background, redirecting stdin from a file
+          called file.in, and redirecting stdout and stderr to a file called
+          file.out, type:
+          java MyProg.tini < file.in >& file.out &
+
+          To get a file listing and redirect to the serial port, type:
+          ls > S0
+           
+
+  Available commands:
+
+    append
+        Appends a source file to a destination file.
+
+        Usage: append SRC DEST
+
+    arp
+        Displays the current ARP cache entries.
+
+        Usage: arp
+
+    cat
+        Displays the contents of a file.
+
+        Usage: cat FILE
+
+    cd
+        Changes the current working directory.
+
+        Usage: cd DIR
+
+    chmod
+        Changes the permissions of a file.
+
+        Usage: chmod [[u|o][+|-][r|w|x]] OR [##]
+
+        Examples:
+          To remove user's read and write permission on s.txt
+            chmod -r-w s.txt <OR> chmod 10 s.txt
+          To remove other's execute and add read permission on s.txt
+            chmod o+r-x s.txt <OR> chmod 75 s.txt
+
+    chown
+        Changes the owner of a file.
+
+        Usage: chown USER FILE
+
+    clear
+        Clears the screen.  Note: currently only works from a Telnet session.
+        Will possibly work for a serial session in a future VT100 friendly
+        release of JavaKit.
+
+        Usage: clear
+
+    cp
+        Copies a source file to a destination file.
+
+        Usage: cp SRC DEST
+        Alias: copy
+
+    date
+        Display or set system time information.
+
+        Usage: date MMDDYYYYHHMMSS[am | pm] [timezone]
+
+
+        Examples:
+                   To set March 17, 1975 3:35:23, type:
+                   date 03171975033523pm
+                    OR
+                   date 03171975153523
+
+                   The first call to date above specifies the time in 12 hour
+                   mode, so the "pm" is needed to indicate the correct time of
+                   day.  The second call specifies the time in 24 hour mode, so
+                   the "pm" specifier is not given.
+
+
+                   You do not need to set all of the date information at once.
+                   If the time on your TINI board is correct, but you want to
+                   alter the day or month, you can specify only the first few
+                   settings.
+
+                   To set April 5, type:
+                   date 0405
+
+                   To set April 5 in Central Standard Time, type:
+                   date 0405 CST
+
+                   To set only the timezone to Pacific Standard Time, type:
+                   date PST
+
+    df
+        Displays the amount of free RAM.  Remember that RAM is both runtime heap
+        and filesystem memory.  There is also a small overhead of approx. 64
+        bytes incurred on each slush command execution.
+
+        Usage: df
+
+    echo
+        This command echos back a line of text to a stream.  System.out (i.e.
+        the current console) is the default, but you can choose to redirect
+        the output to a file.
+
+        Usage: echo TEXT
+
+    gc
+        Runs the system garbage collector to sweep up and make available
+        collectible memory. This command only cleans up garbage generated
+        by slush and not garbage generated by other applications.
+
+        Usage: gc
+
+    genlog
+        Controls generation of the system log file that is produced on boot.
+        The log file (/etc/.log) will contain system status messages of the
+        boot process.  With no options to the command, it will print out the
+        whether or not the log file will be produced on next boot.
+
+        You must have admin privileges to use this command.
+
+        Usage: genlog OPTION
+               where options include:
+                 [-e]  Enable log.
+                 [-d]  Disable log.
+
+    help
+        With no arguments, this command will print out a list of all available
+        commands.  It can also be passed the name of a command to print out
+        specific usage information.
+
+        Usage: help [COMMAND]
+
+    history
+        Displays the current history list.  Use !!, !<str>, !#, or up and down
+        arrows to access particular entries.
+
+        Usage: history
+
+    hostname
+        Displays or sets the system hostname and domain name.
+
+        You must have admin privileges to use this command.
+
+        Usage: hostname NAME
+
+        Example:
+                 To set the hostname and the domain name, type:
+                 hostname tini1.dalsemi.com
+                 Since the ".dalsemi.com" domain name was specified, the
+                 command set that domain name for the system.
+
+                 To set the hostname only to, type:
+                 hostname tini1
+        
+    ipconfig
+        This commands allows you to display or configure the TINI's network
+        settings.  With no arguments, the command will display the current
+        network configuration.
+
+        If you are changing current information and have any slush network
+        servers running (Telnet or FTP), this command will bring down those
+        servers, make the network configuration updates, then bring up the
+        servers again.  If you call this command to set information from a
+        Telnet session, you will be disconnected.
+
+        You must have admin privileges to use this command.
+
+        Usage: ipconfig [OPTIONS]
+               where options include:
+                 [-a xx.xx.xx.xx]  Set the IP address.  Must be used with the
+                                   -m option.
+                 [-n domainname]   Set the domain name
+                 [-m xx.xx.xx.xx]  Set the subnet mask.  Must be used with -a
+                                   option.
+                 [-g xx.xx.xx.xx]  Set the gateway address.
+                 [-p xx.xx.xx.xx]  Set the primary DNS address
+                 [-s xx.xx.xx.xx]  Set the secondary DNS address
+                 [-d]              Use DHCP to lease an IP address
+                 [-r]              Release currently held DHCP IP address
+                 [-x]              Show all Interface data
+                 [-h xx.xx.xx.xx]  Set mailhost
+                 [-C]              Commit current network configuration to flash
+                 [-D]              Disable restoration from flash
+                 [-f]              Don't prompt for confirmation
+
+        Example:
+                 To set your IP address, subnet mask, and gateway, type:
+                 ipconfig -f -a 192.168.1.10 -g 192.168.1.1 -m 255.255.255.0
+
+                 To tell slush to initiate DHCP, type:
+                 ipconfig -f -d
+
+                 To commit the current network settings to flash memory type:
+                 ipconfig -C
+
+        Note: Committing the network settings to flash allows applications
+              to use TINIOS.blastHeapOnReboot(BLAST_ALL) to clear the heap
+              to a virgin state on reboot without having to reconfigure the 
+              network through a serial connection. If the settings are 
+              committed, TINIOS will compare the settings stored in flash to 
+              those stored in heap at boot time. If they are different, the 
+              settings in flash will be copied over those in the heap. This 
+              allows TINIOS to always boot up with a known network 
+              configuration.
+
+              Due to the nature of flash (write once and erase) the network
+              settings can only be committed one time using the "-C" switch. 
+              Once they are committed you can disable boot time restore 
+              using the "-D" switch. Effectively this is the same as if the
+              network configuration was never committed. The configuration is
+              stored in RAM only and can be reconfigured at will.
+
+              The network configuration can only be recommitted after erasing
+              (zapping) bank 7 which will also erase the bank 7 application. 
+              The easiest way to do this is to simply reload the bank 7
+              application using JavaKit.
+
+              This functionality is available to applications using the 
+              TININet.commitNetworkState and TININet.disableNetworkRestore
+              methods.
+
+    java
+        This commands allows you to execute a Java class (.tini) file.  This
+        will launch another process to begin executing the file.  If you do
+        not specify to run the program in the background (i.e. give a '&' at
+        the end of the command) then you will not be returned a slush prompt
+        until your program finishes executing.  See the 'kill' command for
+        information on how to stop a running process.
+
+        If you are running from a Telnet session and run a program in the
+        background, you will see the output from your program as well as the
+        slush prompts from your current Telnet session.  However, because of
+        serial port sharing issues, if you run a program in the background from
+        a Serial Session prompt, you will not see the output of your program.
+        Either run your program in the foreground on the serial server, or
+        redirect the output of that program to a file.
+
+        The new process that is launched will inherit its parent's System
+        properties.  You can specify other properties with the -Dkey=value
+        specifier.
+
+        You must have execute privileges for the given file.
+
+        Usage: java FILE.tini
+
+        Examples:
+                  To run a program in the background and redirect the output
+                  from this program to a file, type:
+                  java Pepe.tini > out.txt &
+
+                  To run this same program in the foreground, leave off the
+                  '&':
+                  java Pepe.tini > out.txt
+
+                  You can also redirect input:
+                  java Pepe.tini < in.txt > out.txt
+
+                  If you want to run your program in the background, but do
+                  not want to see the output of the running program, type:
+                  java Pepe.tini > null
+
+                  You can also choose to redirect the output to the serial port.
+                  You must have admin privileges, and should not do this if you
+                  are already at a serial server prompt.  Slush will bring down
+                  the serial server, run the program, then bring it back up on
+                  completion if you run in the foreground:
+                  java Pepe.tini > S0
+
+                  The 'S0' specifies serial0, and is the only supported serial
+                  port for this operation.
+
+                  To set the System property "badgers" to be "furry":
+                  java -Dbadgers=furry Pepe.tini
+
+    kill
+        Use this command to kill a currently running process.  To see the
+        running processes and get the process ID associated with a process,
+        type "ps" at a slush prompt.
+
+        You must be either be admin or own the given process to kill it.
+
+        Usage: kill PROCESS_ID
+
+    logout
+        Log the current user out of the system and end the current session.
+        If the user has used the "su" command, logout will pop one level off
+        the login stack.  That is, if guest logs in, uses su to become root,
+        then types logout, the user will still be logged in as guest.  Logout
+        again will log the user completely off of the system.
+
+        Usage: logout
+        Alias: bye, exit, quit
+
+    ls
+        Displays a listing of the files in a directory, or information on a
+        specific file.
+
+        Usage: ls [option] [FILE]
+               where options include:
+                 [-l]  Show all file attributes
+        Alias: dir
+
+        Example:
+                 The directory listing:
+                 total 5
+                 drwxr-x      1 root     admin          3 Jan 05 04:06 .
+                 drwxr-x      1 root     admin          1 Jan 05 04:06 ..
+                 -rwxr--      1 root     admin         28 Jan 05 04:06 .tininet
+                 -rwx---      1 root     admin        225 Jan 05 04:06 .startup
+                 -rwxr--      1 root     admin        101 Jan 05 04:06 passwd
+
+                 The permissions for passwd, from left to right, indicate
+                 NOT a directory(-), owner-read(r), owner-write(w),
+                 owner-execute(x), world-read(r), NOT-world-write(-) and NOT
+                 world-execute(-).  The owner is listed as root.  The admin
+                 entry indicates group admin.  Slush does not support different
+                 groups, but this entry is here for Unix listing compatibility
+                 for the FTP server.  Its size is 101 bytes, created on Jan
+                 5 at 4:06am (GMT).
+
+    mkdir
+        Creates a specified directory.
+
+        Usage: mkdir DIR
+        Alias: md
+
+    mv
+        Moves a specified file to a destination.  Can be also used to rename
+        a file.
+
+        Usage: mv SRC DEST
+        Alias: move
+
+    nslookup
+        Displas the name or IP of the given argument.
+
+        Usage: nslookup [NAME | IP]
+
+    passwd
+        Sets the password for a given user.  If no user is specified, the
+        current user is assumed.  You must either be the specified user, or
+        have admin permissions to run this command.
+
+        Usage: passwd [USER]
+
+    ping
+        Sends ICMP echo request packets to network hosts.
+
+        Usage: ping HOST [number of pings]
+
+    ps
+        Displays a list of the currently running processes and the process ID
+        for each.
+
+        Usage: ps
+
+    pwd
+        Displays the current working directory.
+
+        Usage: pwd
+
+    reboot
+        Shuts down all slush servers and cleanly reboots the system.  You must
+        be admin to use this command.
+
+        This command allows you to request that the heap be cleared on reboot.
+        This results in the same clean state as if you had cleared the heap
+        with 'b18' 'f0' in JavaKit.  It also has the added benefit of a
+        significant speed increase for the system.  Since the heap will be
+        cleared on reboot, the underlying TINIOS does not have to do expensive
+        POR protection.
+
+        Usage: reboot [option]
+               where options include:
+                 [-f] Don't prompt for confirmation
+                 [-h] Clear heap on reboot.
+                 [-a] Clear heap and system memory on reboot.
+
+    rm
+        Deletes a given file.
+
+        Usage: rm FILE
+        Alias: del
+
+    rmdir
+        Deletes a given directory.
+
+        Usage: rmdir DIR
+        Alias: rd
+
+    sendmail
+        Sends an email to designated recipients separated by commas.  Begin
+        typing the email, then place a '.' on the last line by itself and hit
+        <Enter> to send.  Sendmail will prompt for any information not given
+        on the commandline.
+
+        Usage: sendmail [options] [RECIPIENT(s)] [CC's] TEXT
+               where options include:
+                [-f fromAddr]  From address.  If not specified, the default
+                               uses the current system settings for:
+                                 USER@HOSTNAME.DOMAINNAME
+        
+    setenv
+        Set a given variable to the value in the current environment.  With no
+        parameters, the command will print out the current environment.
+
+        Usage: setenv VAR VALUE
+
+    source
+        Executes each line in a file as if it were given at a slush prompt.
+
+        Usage: source FILE
+
+    stats
+        Displays the current system status information.
+
+        Usage: stats
+
+    startserver
+        Starts up the specified slush server.  You must be admin to use this
+        command.
+
+        Usage: startserver [options]
+               where options include:
+                 [-s]  Serial Server
+                 [-t]  Telnet Server
+                 [-f]  FTP Server
+
+    stopserver
+        Shuts down the specified slush server.  You must be admin to use this
+        command.  You can also use this command to disable the slush boot
+        messages that go to serial0 with the '-d' option.
+
+        Usage: stopserver [options]
+               where options include:
+                 [-s]  Serial Server
+                 [-d]  Disable console output.  Used only with '-s'.
+                 [-t]  Telnet Server
+                 [-f]  FTP Server
+        Alias: downserver
+
+    su
+        Assume the identity of the specified user.  Assumes root as default.
+
+        Usage: su [USER]
+
+    touch
+        Sets the last modified time to the current time.  If the file does not
+        exist, the command will create a new 0 length file.
+
+        Usage: touch FILE
+
+    useradd
+        Adds a user to the list of known users for the system.  You must
+        provide the username, password, and user ID for the new user.  The
+        command will prompt for any information not supplied on the commandline.
+
+        Valid user ID's range from 0 to 255.  All ID's large than 127 will have
+        super user privileges.  The user ID of 0 is reserved for guest login,
+        128 is reserved for root.
+
+        You must be an admin to use this command.
+
+        Usage: useradd [OPTIONS]
+               where options include:
+                 [-n username]  Name of the new user
+                 [-p password]  Password for the new user
+                 [-i userid]    New user's ID
+
+    userdel
+        Removes the given user from the system.  Multiple users can be
+        specified separated with spaces.
+
+        You must be an admin to use this command.
+
+        Usage: userdel USER(s)
+
+    wall
+        Broadcast a message to all logged in users.
+
+        The wall command can be disabled with the environment variable
+        "BROADCASTS" set to "false".
+
+        Usage: wall MESSAGE
+
+    wd
+        Sets or displays the slush watchdog timer settings.  With no arguments,
+        displays the current settings.  This allows the user to protect against
+        a system hang situation.
+
+        You must be admin to use this command.
+
+        Usage: wd [options]
+               where options include:
+                 [-i interval] Set watchdog interval (ms).  Must be used with
+                               '-p' option.
+                 [-p interval] Set the feed interval (ms).  Must be less than
+                               watchdog interval.
+                 [-s]          Stop the current watchdog timer.
+
+    who
+        Displays all users currently logged into the system.
+
+        Usage: who
+
+    whoami
+        Displays the current user's username.
+
+        Usage: whoami
+
+
+  Optional commands:
+
+    These commands are located in the src\Optional\SlushCommands directory.
+    Because of size restrictions, to use them you might have to remove a
+    current slush command.  Edit Slush.java, go to the initializeShellCommands()
+    method, comment out the command you are removing, then add a new line for
+    the new command.  **Remember to delete the class files under the slush\bin
+    directory and rebuild.  Otherwise, that old command's class file will
+    still be built into your build (thus making your build too big).
+
+    When you build slush, TINIConvertor will report the size of the applet
+    in a line similar to:
+      Total Application length: 46438
+
+    As long as the number reported is less than 65281, your slush build is
+    under the maximum size restriction.
+
+    diff
+        Compares two files byte for byte.
+
+        Usage: diff FILE1 FILE2
+
+    pollmemory
+        Starts a thread that will send the free RAM to the given port on a
+        specified millisecond interval.  Run the associated MemDisplay
+        program (in the examples folder) on a host computer to see the output.
+
+        Usage: pollmemory [options]
+               where options include:
+                 [-i interval] Report interval (ms).
+                 [-p port]     Port to use.
+                 [-s]          Stop the current memory reporter.
+
+    ppp
+        Configures and sets the operating options for PPP connections.
+
+        Usage: ppp [options]
+               where options include:
+                 [-a xx.xx.xx.xx]    Set local IP address
+                 [-c]                Close connection
+                 [-p password]       Set login password
+                 [-r xx.xx.xx.xx]    Set remote IP address
+                 [-u username]       Set login username
+                 [-s]                Start server
+                 [-d]                Start client
+
+    sled
+        This command provides a basic vi like text editor.
+
+        Note: currently only works from a Telnet session.  Will possibly work
+              for a serial session in a future VT100 friendly release of
+              JavaKit.
+
+        Sled supports a subset of vi features.  Some of the more common
+        things sled supports are:
+             Insert/Normal mode:
+                 Inserting: i, I, o, O, a, A, s, S, C, cw, p, ., r, R, &, 
+                 Deleting : dw, D, x
+                 Movement : w, b, ^, $, G, H, L, M, ^l, ^d, ^u, ^b, ^f,
+                            h, j, k, l, m, '
+                 Searching: ?, /, n, N
+                 Misc     : J, yy, ZZ
+ 
+             Command mode:
+                 Search & Replace: :[range]s/oldStr/newStr/[options]
+                                   where [range] can be '%' (file global),
+                                   'start,end' to limit to between start and
+                                   end lines inclusive, or nothing for current
+                                   line only.
+                                   [options] can be any combo of 'c'
+                                   (confirm), 'g' (line global), or 'i' (case
+                                   insensitive search)
+                 Text Movement   : :[range] move [addr]  (move lines in range
+                                   to addr)
+                                   :[range] d            (delete lines in range)
+                                   where range can be line numbers or marks
+                                   separated by a ',' (e.g. :'a,'b move .)
+                                   addr can be '.', '$', or a line number
+                 Set             : Only set option currently supported is IC
+                                   (make searches case insensitive.)
+                 Saving/Exiting  : x, wq, w!, w [new filename]
+                 Misc            : e (edit new file), r [filename] (insert
+                                   this file)
+                                 :lineNumber (goto that line)
+  
+        Sled supports an unlimited undo buffer.
+
+        There are **many** things that sled does not currently support.
+        Some of the most notable:  
+           Tab support   : Right now, sled replaces any tabs with 5 spaces.
+           ctrl-v        : Insert control characters.  (i.e. the user types
+                           ctrl-v, the next thing typed such as a ctrl-M
+                           should be taken literally.)
+           Some mark cmds: Mark yanking and mark deleting are not totally
+                           supported.  You can't:
+                           ma   (set a mark on current line, call it 'a')
+                           <move cursor>
+                           y'a  (copy from current pos to the line marked by a.)
+                           But you can:
+                           ma   (set a mark on current line, call it 'a')
+                           <move cursor>
+                           mb   (set a mark on current line, call it 'b')
+                           <move cursor>
+                           :'a,'b copy .     (Copy from a to b and place it on
+                                              the current line.)
+
+ 
+        Hint: use refresh (CTRL-l) if you feel what you see on the screen isn't
+              what really is there.  This will repaint the screen and correctly
+              set the cursor in the correct position.
+
+        Usage: sled [FILE]
+
+
+VI. Changes
+=---------=
+
+- For a complete list of system changes, see Changes.txt
+
+- The items in this list are exact copies of entries in the Changes.txt file.
+  They are placed here for convenience, and are here either because they are
+  direct slush fixes/updates, or they impact slush directly.
+
+1.02c
+-===-
+-=============-
+
+   Problem    : Applications starting from .startup during SLUSH boot
+                would not know if an IP was acquired when using DHCP.
+
+   Since      : Beta
+
+   Description: N/A
+
+   Solution   : A small addition was made to slush to wait for the DHCPListener
+                thread to lease an IP then continue on with slush boot. The 
+                default wait timeout is 10 seconds, which is changeable in the 
+                slush source by modifying DHCPLOCKTIMEOUT.
+
+-=============-
+
+
+1.02
+-==-
+-=============-
+
+   Problem    : Can't bypass the .startup file by hitting the '5' key.
+
+   Since      : 1.02p1
+
+   Description: Freakin' Stephen was using System.in.available() to see if
+                any data was waiting, but that implementation of
+                SystemInputStream reportedincorrect values that was fixed by
+                1.02p1, so Slush never thought any data was available.
+
+   Solution   : Changed Slush to get the root input stream to find available
+                data.
+
+-=============-
+
+   Problem    : netstat prints out slowly.
+
+   Since      : Beta
+
+   Description: It was byte banging.
+
+   Solution   : Use a BufferedOutputStream.
+
+-=============-
+
+   Problem    : TINI stays up for days at a time now (I guess that's not
+                really a problem)
+
+   Since      :
+
+   Description:
+
+   Solution   : Added a "Days: " line to the 'stats' command in Slush.
+
+-=============-
+
+   Problem    : Trying to set Slush's time zone to an invalid time zone
+                gets an exception.
+
+   Since      : Beta
+
+   Description:
+
+   Solution   : Catch the exception and print out the usage string.
+
+-=============-
+
+   Problem    : 'ps' doesn't report owner names.
+
+   Since      : Beta
+
+   Description:
+
+   Solution   : Report owner names along with process names.
+
+-=============-
+
+   Problem    : If I try to execute a directory (duh) with the slush command
+                'source', I get an exception.
+
+   Since      : Beta
+
+   Description:
+
+   Solution   : Print out a nice error message.
+
+-=============-
+
+   Problem    : Slush does not release CommPortOwnership listener when 
+                serialServer is shut down.
+
+   Since      : 1.02.p2
+
+   Description: N/A
+
+   Solution   : Fixed
+
+-=============-
+
+
+1.02.p2
+-=====-
+
+- Slush now implements a CommPortOwnershipListener.  When another
+  application attempts to open the port used by the serial server,
+  slush will shut down the server and relinquish the port.  Once the
+  port is free again, slush will restart its serial server.  This
+  behavior can be changed by adding a "serial.server.properties" file
+  to the "etc" directory of the file system.  This property file should
+  have a key of "automatic.shutdown" with a value of "true" or "false".
+  For example, to have the serial server *NOT* shut down when someone
+  attempts to open its serial port add the following line to the file:
+
+  automatic.shutdown=false
+
+-=============-
+
+   Problem    : Some Slush commands would throw an ArrayIndexOutOfBounds
+                exception when incorrect/incomplete arguments were given.
+
+   Since      : TINI 1.02.p1
+
+   Description: GetOpt would sometimes move on to the next argument without
+                making sure there was a next argument.
+
+   Solution   : Change to always check to make sure that the next argument
+                exists.  Also added support for 'instant failure', if GetOpt 
+                runs into a character or argument it doesn't know what to do 
+                with, if the format string used to create GetOpt starts with 
+                a '!', it fails on this argument. Default behaviour is to 
+                leave the argument for the application.
+
+-=============-
+
+   Problem    : Source would cough up an "ERROR:Unknown Command" on blank
+                lines of scripts.
+
+   Since      : Beta
+
+   Description: Source did not check for empty lines.
+
+   Solution   : Source now checks for empty lines before trying to execute
+                them.
+
+-=============-
+
+   Problem    : The slush 'Source' command makes it hard to do any infinite
+                loop scripts and stuff.
+
+   Since      : Beta
+
+   Description: It could use some scripting power.
+
+   Solution   : Added some scripting functionality.  The following are
+                supported:
+                  1. Executes a line forever.
+                     WHILE TRUE
+                       normal-command-line
+                  2. Executes a line a set number of times.
+                     FOR <int>
+                       normal-command-line
+                  3. Compound statements can be used in place of
+                     "normal-command-line".
+                     WHILE TRUE
+                     { 
+                       do-something-1
+                       do-something-2
+                       do-something-3
+                     }
+                  4. Command line parameters.
+                     java echo.tini $1 $2 $3 $4 $5
+                     Parameters which do not exist will be replaced with "".
+
+-=============-
+
+   Problem    : Optional PPP slush command does not reflect changes to
+                PPP API.
+
+   Since      : 1.02.p1
+
+   Description: Optional PPP slush command does not reflect changes to
+                PPP API.
+
+   Solution   : PPP command source has been updated.
+
+-=============-
+
+1.02.p1
+-=====-
+
+-=============-
+
+   Problem    : Slush password hashes were insecure--created by appending
+                the password to the username.
+
+   Since      : Beta
+
+   Description: This is insecure because username 'root', password 'tini'
+                hashes to the same result as 'roott', 'ini' does.  An attacker 
+                could guess the password in linear time.
+
+   Solution   : Hash (username + ":" + password)
+
+-=============-
+
+   Problem    : The AddUser command in Slush checked to see if a user
+                existed in the password file by using the String.startsWith() 
+                method on each line of the password file.
+
+   Since      : Beta
+
+   Description: This is a problem if a user "user_admin" existed, and you
+                wanted to create a user named "user".  The operation would 
+                fail.
+
+   Solution   : Parse the password from the file entry, compare using the
+                String.equals() method.
+
+-=============-
+
+   Problem    : SLUSH ipconfig command changing PPP interface parameters
+
+   Since      : introduction of PPP
+
+   Description: Until this release the -a, -m and -g options made changes 
+                to the default interface. If PPP is running as the default 
+                interface using the ipconfig command would change parameters 
+                of the PPP link. PPP interface address assignment should 
+                only be configured via the PPP class.
+
+   Solution   : now the -a, -m, -g options only change the ethernet
+                interface.
+
+-=============-
+
+   Problem    : none
+
+   Since      : introduction of SLUSH
+
+   Description: Changed nomenclature of loopback network interface.
+                Interface name changed to "lo" from "localhost". Interface 
+                type changed to "Local Loopback" from "Ethernet".
+
+   Solution   : none
+
+-=============-
+

@@ -1,0 +1,147 @@
+Running_JavaKit.txt (DC, 09.14.01)
+
+-=---------------=-
+TINI Firmware 1.02c
+-=---------------=-
+--------------------------------------------------------------------
+Go to http://www.ibutton.com/TINI/book.html for an online version of 
+"The TINI Specification and Developer's Guide".
+--------------------------------------------------------------------
+
+Changes
+=-----=
+
+o Previous versions of JavaKit required you to zero any flash banks
+  before you write to them.  JavaKit will now take care of this for you.
+
+o JavaKit can now load Dallas binary files as well as HEX files.  The
+  firmware and API are now shipped as a single binary file with the
+  extension *.tbin.  You will notice a much faster load process as a result.
+
+
+Setup
+=---=
+
+1.  This assumes you have already downloaded and installed both the
+    Java Development Kit and javax.comm, the Java extension for Communication
+    (Java communications API).  
+    
+    These can be downloaded directly from Sun at:
+        http://java.sun.com/products/javacomm/index.html
+
+    A Linux port for javax.comm can be obtained at:
+        http://www.rxtx.org
+
+
+2.  Put tini.jar in your CLASSPATH. In DOS, this can be done in your
+    autoexec.bat file or from the command line with the line:
+
+        SET CLASSPATH=<TINI Install Dir>\tini.jar;%CLASSPATH%
+
+    or append it to the current SET CLASSPATH line if you already have one.
+
+    If you are running JDK 1.1, you also need to put comm.jar (from javax.comm)
+    and swingall.jar in the CLASSPATH, and place javax.comm.properties in your
+    <jdk1.1>/lib directory. See PlatformSpecific.html in the javacomm 
+    distribution for the proper installation of the driver (.dll or .so) file.
+    If you are using RXTX for the driver (Linux) see included documents for
+    proper installation location.
+
+    If you are running JDK 1.2 (Java 2) you should put comm.jar in the 
+    <jdk1.2>/jre/lib/ext directory or the CLASSPATH, and the file
+    javax.comm.properties should be placed in <jdk>/jre/lib. See jdk1.2.html in
+    the javacomm distribution for the proper installation of the driver 
+    (.dll or .so) file. If you are using RXTX for the driver (Linux) see 
+    included documents for proper installation location.
+
+
+3.  Run JavaKit by typing:
+
+        java JavaKit
+
+        or
+
+        java -classpath <TINI Install Dir>\tini.jar JavaKit
+
+
+Note: Type JavaKit -help for the command line options.  For example, you can
+      have JavaKit auto-open the port for you with:
+
+        java -classpath <TINI Install Dir>\tini.jar JavaKit -port COM1
+
+
+Troubleshooting
+=-------------=
+
+     If you have any errors with serial communications (i.e. no COM ports
+     show up as available ports), you should first run the BlackBox example in
+     the javax.comm distribution.  If this works correctly and can see your
+     serial ports, JavaKit should run correctly.
+
+     Other things to check:
+
+         o Make sure that tiniclasses.jar is NOT in your classpath.  This jar
+           file contains our implementation of the Java API and javax.comm.
+           If this jar file comes before comm.jar in your classpath, Java will
+           attempt to run with our javax.comm.  This failure usually looks
+           like:
+             Exception occurred during event dispatching:
+             java.lang.UnsatisfiedLinkError: getOwned
+             at com.dalsemi.comm.TINISerialPort.isOwned(TINISerialPort.java,...
+             at com.dalsemi.comm.TINICommDriver.open(CommPortIdentifier.java)
+             at JavaKit.openPort(JavaKit.java, Compiled Code)
+             ...
+
+         o If you are using JDK 1.1, you *must* add swingall.jar (as wellas 
+           comm.jar) to your CLASSPATH.
+
+         o On Windows platforms with JDK 1.2, make sure that these files are in
+           the correct place:
+               <jdk1.2>\jre\bin\win32com.dll
+               <jdk1.2>\lib\javax.comm.properties
+               <jdk1.2>\jre\lib\ext\comm.jar
+
+         o On Linux platforms, make sure you've downloaded the Solaris version
+           of javax.com from Sun.  All you need from this download is comm.jar.
+           If you are running JDK 1.2, this file should be in
+           <jdk1.2>/jre/lib/ext.
+
+           Make sure you have the file: 
+               <jdk1.2>/lib/javax.comm.properties
+           that contains a single line:
+               Driver=gnu.io.RXTXCommDriver
+
+           Make sure the permissions are correctly set (read and write) for
+           the account you are using. 
+
+           Make sure the permissions are set to read and write for the 
+           serial port you are using.
+
+     If you are having .tbin load failures on Linux:
+
+           In Linux, JavaKit frequently fails to load a tbin file and 
+           aborts with various error messages including
+           "No response from TINI". Usually the file will
+           successfully load on a retry.
+
+           The default behavior of the serial ports in Linux 
+           is to wait for a number of bytes to accumulate in
+           the buffers before handing them off to an 
+           application.
+
+           The default latency is on the order of tens of 
+           milliseconds. This latency causes problems with 
+           javax.comm/rxtx/JavaKit. This problem became 
+           apparent when the file format was switched to
+           binary.
+
+           Kernels 2.1 and higher allow root to change the 
+           latency using the setserial command. Kernel 2.0
+           has a patch that can be compiled into the kernel
+           to lower the latency. The commandline for setserial
+           looks like this for /dev/ttyS0:
+
+               setserial /dev/ttyS0 low_latency
+
+           You may need to "su" to root to execute this comand.
+           You will need to run this command after every reboot.

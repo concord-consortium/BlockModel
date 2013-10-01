@@ -1,0 +1,1271 @@
+Native_API.txt (DC, 09.14.01)
+
+-=---------------=-
+TINI Firmware 1.02c
+-=---------------=-
+--------------------------------------------------------------------
+Go to http://www.ibutton.com/TINI/book.html for an online version of 
+"The TINI Specification and Developer's Guide".
+--------------------------------------------------------------------
+
+This file contains documentation on functions exported in the native API.
+You must include tini.inc in your source to access these methods. See 
+tinimacro.inc for useful macros.
+
+Native API functions preserve all registers except those that are listed 
+as outputs in the descriptions below and those listed in the "Notes" 
+section of a particular description.
+
+=========================================================================
+
+NOTE: Previous versions of this file listed the first data pointer
+      as DPTR or DPTR1 and the second data pointer as DPTR2. To avoid 
+      confusion the first data pointer is now listed as DPX:DPH:DPL and
+      the second data pointer is listed ad DPX1:DPH1:DPL1.
+
+      The notation X:...:Y indicates a value that is contained in two or
+      more registers with the leftmost register (X in this example) 
+      containing the Most Significant Byte and the rightmost register 
+      (Y in this example) containing the Least Significant Byte.
+
+=========================================================================
+
+1) Java Stack Manipulation (method parameters)
+2) Native State Blocks
+3) Memory Management
+4) System 
+5) Utility
+6) Debug
+
+Also see tinimacro.inc for useful macros.
+
+Java Stack Manipulation
+-=====================-
+;****************************************************************************
+;*
+;* Function Name: NatLib_LoadJavaByteArray
+;*
+;*   Description: Extracts a reference from the Java Stack and
+;*                resolves it to a Java byte array.
+;*
+;*      Input(s): A - zero based parameter number
+;*
+;*    Outputs(s): A - 0 if success, NullPointerException otherwise
+;*                DPX:DPH:DPL - pointer to start of array data
+;*                R3:R2:R1:R0 - length of Java byte array
+;*                
+;*         Notes: !!! New for 1.02 !!!
+;*
+;*                Java byte arrays currently have the format:
+;*                  [type byte][length lsb][length msb][data 0...data n-1]
+;*                This structure limits byte arrays to 64k bytes. This 
+;*                structure could be changed in a future firmware revision
+;*                which could break native libraries that use the 
+;*                NatLib_LoadPointer function and then parse the length
+;*                and data manually. This function will work properly for
+;*                firmware revisions 1.02 and greater.
+;*
+;****************************************************************************
+;*
+;* Function Name: NatLib_LoadPrimitive
+;*
+;*   Description: Extracts a standard width (int, short, byte, ...)
+;*                parameter from the Java Stack.
+;*
+;*      Input(s): A - zero based parameter number
+;*
+;*    Outputs(s): R3:R2:R1:R0 - parameter[acc]
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: NatLib_LoadWidePrimitive
+;*
+;*   Description: Extracts a wide (long, double)
+;*                parameter from the Java Stack.
+;*
+;*      Input(s): A - zero based parameter number
+;*
+;*    Outputs(s): R7:R6:R5:R4:R3:R2:R1:R0 - parameter[acc+1]:parameter[acc]
+;*                
+;*         Notes: Wide primatives count as two parameters.
+;*                Example:
+;*                  static void mixedMethod(int a, long b, int c);
+;*                  - "a" is a standard width parameter with index 0
+;*                  - "b" is a wide parameter with index 1
+;*                  - "c" is a standard parameter with index 3 
+;*
+;****************************************************************************
+;*
+;* Function Name: NatLib_LoadPointer
+;*
+;*   Description: Extracts a reference from the Java Stack and
+;*                resolves it to a physical pointer.
+;*
+;*      Input(s): A - zero based parameter number
+;*
+;*    Outputs(s): A - on success, 
+;*                    NullPointerException otherwise
+;*                DPX:DPH:DPL - parameter[acc]
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+
+Native State Blocks
+-=================-
+;****************************************************************************
+;*
+;* Function Name: NatLib_InstallImmutableStateBlock 
+;*
+;*   Description: Adds a reference/pointer to the state block table. 
+;*
+;*      Input(s): DPX:DPH:DPL - pointer to library's 8 byte identifier 
+;*                DPX1:DPH1:DPL1 - pointer to library state block
+;*                R3:R2 - handle for library state block
+;*
+;*    Outputs(s): A - 0 if successful
+;*                
+;*         Notes: - This function marks the memory referenced by R3:R2
+;*                  as immutable using mm_UnrestrictedPersist.
+;*                - Immutable blocks persist until the heap is cleared
+;*
+;****************************************************************************
+;*
+;* Function Name: NatLib_InstallEphemeralStateBlock 
+;*
+;*   Description: Adds a reference/pointer to the state block table. 
+;*
+;*      Input(s): DPX:DPH:DPL - pointer to library's 8 byte identifier 
+;*                DPX1:DPH1:DPL1 - pointer to library state block
+;*                R3:R2 - handle for library state block
+;*
+;*    Outputs(s): A - 0 if successful
+;*                
+;*         Notes: Ephemeral blocks persist only until a reboot occurs.
+;*
+;****************************************************************************
+;*
+;* Function Name: NatLib_RemoveImmutableStateBlock
+;*
+;*   Description: Removes a reference/pointer from the state block table. 
+;*
+;*      Input(s): DPX:DPH:DPL - pointer to library's 8 byte identifier 
+;*
+;*    Outputs(s): None
+;*                
+;*         Notes: This function DOES NOT free the memory. 
+;*
+;****************************************************************************
+;*
+;* Function Name: NatLib_RemoveEphemeralStateBlock
+;*
+;*   Description: Removes a reference/pointer from the state block table. 
+;*
+;*      Input(s): DPX:DPH:DPL - pointer to library's 8 byte identifier 
+;*
+;*    Outputs(s): None
+;*                
+;*         Notes: This function DOES NOT free the memory. 
+;*
+;****************************************************************************
+;*
+;* Function Name: NatLib_GetImmutableStateBlock
+;*
+;*   Description: Returns a reference/pointer to a state block 
+;*
+;*      Input(s): DPX:DPH:DPL - pointer to library's 8 byte identifier 
+;*
+;*    Outputs(s): A - 0 if successful
+;*                DPX:DPH:DPL - pointer to library state block
+;*                R3:R2 - handle to library state block
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: NatLib_GetEphemeralStateBlock
+;*
+;*   Description: Returns a reference/pointer to a state block 
+;*
+;*      Input(s): DPX:DPH:DPL - pointer to library's 8 byte identifier 
+;*
+;*    Outputs(s): A - 0 if successful 
+;*                DPX:DPH:DPL - pointer to library state block
+;*                R3:R2 - handle to library state block
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+
+Memory Management
+-===============-
+;****************************************************************************
+;*
+;* Function Name: MM_XMalloc
+;*
+;*   Description: Extended memory malloc (for > 64k memory blocks).
+;*
+;*      Input(s): R4:R3:R2 - size of block requested
+;*
+;*    Outputs(s): A - 0 if handle and memory were added successfully,
+;*                    otherwise, there was an error
+;*                R3:R2 - handle pointing to new memory
+;*                DPX:DPH:DPL - absolute pointer to new memory
+;*
+;*         Notes: !!! New for 1.02 !!!
+;*
+;****************************************************************************
+;*
+;* Function Name: MM_Malloc
+;*
+;*   Description: Memory malloc.
+;*
+;*      Input(s): R3:R2 - size of block requested
+;*
+;*    Outputs(s): A - 0 if successful
+;*                    otherwise, there was an error
+;*                R3:R2 - handle pointing to new memory
+;*                DPX:DPH:DPL - absolute pointer to new memory
+;*
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: MM_ApplicationMalloc
+;*
+;*   Description: Application memory malloc. This function mallocs a Java byte
+;*                array. The memory is automatically tagged with the current 
+;*                task id.
+;*
+;*      Input(s): R3:R2 - size of block requested
+;*
+;*    Outputs(s): A - 0 if successful
+;*                    otherwise, there was an error
+;*                R3:R2 -  handle pointing to new memory
+;*                DPX:DPH:DPL - pointer to new memory
+;*
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: MM_Free
+;*
+;*   Description: Frees a block of memory referenced by a handle.
+;*
+;*      Input(s): R3:R2 - handle to free
+;*
+;*    Outputs(s): R3:R2 - always cleared
+;*
+;*         Notes: None 
+;*
+;****************************************************************************
+;*
+;* Function Name: MM_Deref
+;*
+;*   Description: Dereferences a handle into an absolute address.  Checks
+;*                several conditions to make sure applet doesn't get to
+;*                memory it doesn't own.  This function should be called
+;*                whenever a memory handle from an applet is used.
+;*
+;*      Input(s): R3:R2 - handle to deref
+;*
+;*    Outputs(s): A - 0, handle was successfully dereferenced to 
+;*                        a physical address
+;*                    IllegalAccessError
+;*                    NullPointerException
+;*                DPX:DPH:DPL - physical address associated with handle
+;*
+;*         Notes: The address returned is the first available byte for
+;*                normal user read/write.
+;*
+;****************************************************************************
+;*
+;* Function Name: MM_UnrestrictedPersist
+;*
+;*   Description: Dereferences a handle and marks the memory as
+;*                unrestricted access and persistant.  Use this when you
+;*                have memory which must be accessible to anyone.
+;*
+;*      Input(s): R3:R2 - handle to mark
+;*
+;*    Outputs(s): A - 0, if handle was successfully
+;*                      marked, 
+;*                    otherwise an error occured
+;*
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: MM_AppTag
+;*
+;*   Description: Dereferences a Handle and tags the memory with the 
+;*                application number (process Id).
+;*
+;*      Input(s): R3:R2 - handle to set tag for 
+;*                A - application number (this value can be obtained from
+;*                    System_GetCurrentProcessId)
+;*
+;*    Outputs(s): A - 0, if handle was successfully marked,
+;*                    otherwise an error occured
+;*
+;*         Notes: None
+;*
+;****************************************************************************
+
+System
+-====-
+;****************************************************************************
+;*
+;* Function Name: System_ExecJavaProcess
+;*
+;*   Description: Executes a TINI executable, and returns the Task ID in ACC
+;*
+;*      Input(s): dptr - Pointer to TINI executable image
+;*                R2,R3 - Handle to properly formatted process name.
+;*                    Length (1 byte), ASCII string
+;*                
+;*    Outputs(s): ACC - 0, no error
+;*                      1, error
+;*                      R0-R3, error code or Task ID of new process.
+;*
+;*         Notes: Will check the file for a valid converted ".tini" file.
+;*                This includes checking the API version bytes in ROM against the
+;*                ones in the file.
+;*
+;****************************************************************************
+;*
+;* Function Name: System_GetRTCRegisters
+;*
+;*   Description: Reads 8 byte RTC register map into memory pointed to by 
+;*                DPTR2.
+;*                
+;*      Input(s): DPX1:DPH1:DPL1 - buffer to hold register values. 
+;*
+;*    Outputs(s): ACC - always cleared
+;*
+;*         Notes: - !!! New for 1.02 !!!
+;*                See data sheet for the Dallas Semiconductor DS1315 
+;*                Phantom Time Chip for information on the register
+;*                values.
+;*
+;****************************************************************************
+;*
+;* Function Name: System_SetRTCRegisters
+;*
+;*   Description: Writes 8 byte RTC register map from memory pointed to by 
+;*                DPTR2.
+;*                
+;*      Input(s): DPX1:DPH1:DPL1 - buffer containing register values.
+;*
+;*    Outputs(s): ACC - always cleared
+;*
+;*         Notes: - !!! New for 1.02 !!!
+;*                See data sheet for the Dallas Semiconductor DS1315 
+;*                Phantom Time Chip for information on the register
+;*                values.
+;*
+;****************************************************************************
+;*
+;* Function Name: System_RegisterProcessDestroyFunction
+;*
+;*   Description: Register a cleanup routine to be called when a process 
+;*                exits.
+;*
+;*      Input(s): DPX:DPH:DPL - address of destroy function
+;*
+;*    Outputs(s): A - 0 for success, 
+;*                    otherwise failure.
+;*
+;*         Notes: - !!! New for 1.02 !!!
+;*                - A process destroy function is passed the process id
+;*                  of the application being destroyed.
+;*                - System_GetCurrentProcessId is not guaranteed to return
+;*                  the id of the process being destroyed in the process
+;*                  destroy function.
+;*
+;****************************************************************************
+;*
+;* Function Name: System_UnregisterProcessDestroyFunction
+;*
+;*   Description: Unregister a process cleanup routine.
+;*
+;*      Input(s): DPX:DPH:DPL - address of destroy function
+;*
+;*    Outputs(s): None
+;*
+;*         Notes: !!! New for 1.02 !!!
+;*
+;****************************************************************************
+;*
+;* Function Name: System_Register_Driver
+;*
+;*   Description: Registers a driver with the IO Subsystem. 
+;*          
+;*      Input(s): R0_B1:R1:R0 - address to drv read function 
+;*                R2_B1:R3:R2 - address to drv write function
+;*                R4_B1:R5:R4 - address to drv open function
+;*                R6_B1:R7:R6 - address to drv close function
+;*                R0_B3:R1_B2:R0_B2 - address to drv ioctl function
+;*                R2_B3:R3_B2:R2_B2 - address to drv available function
+;*                A - handler type
+;*
+;*    Outputs(s): A - destroyed 
+;*
+;*         Notes: !!! New for 1.02 !!!
+;*
+;*                Entries look like the following.  Each handler takes up
+;*                13 bytes of storage space
+;*      +-----------------------------------------------+
+;*      | Read Addr Lo | Read Addr Hi | Read Addr Ex    | 
+;*      +-----------------------------------------------+
+;*      | Write Addr Lo | Write Addr Hi | Write Addr Ex |
+;*      +-----------------------------------------------+
+;*      | Open Addr Lo | Open Addr Hi | Open Addr Ex    |
+;*      +-----------------------------------------------+
+;*      | Close Addr Lo | Close Addr Hi | Close Addr Ex |
+;*      +-----------------------------------------------+
+;*      | IOCTL Addr Lo | IOCTL Addr Hi | IOCTL Addr Ex |
+;*      +------------------------------------------------------------+
+;*      | Available Addr Lo | Available Addr Hi | Avalilable Addr Ex |
+;*      +------------------------------------------------------------+
+;*      | Pending | 
+;*      +---------+
+;*
+;****************************************************************************
+;*
+;* Function Name: System_Unregister_Driver
+;*
+;*   Description: Unregisters a driver with the IO Subsystem. 
+;*          
+;*      Input(s): A - handler type
+;* 
+;*    Outputs(s): A - destroyed 
+;*
+;*         Notes: !!! New for 1.02 !!!
+;*
+;****************************************************************************
+;*
+;* Function Name: System_AcquireIndirectSemaphore
+;*
+;*   Description: Acquires semaphore for indirects reserved for native
+;*                libraries. Indirect access is much faster than access
+;*                to state blocks but the space is extremely limited and
+;*                is available on a first come, first serve basis. 
+;*                INDIRECT SPACE IS NOT PARTITIONED FOR USE BY MULTIPLE
+;*                LIBRARIES!!!
+;*
+;*      Input(s): None
+;*
+;*    Outputs(s): A - 0 if semaphore is unowned,
+;*                    otherwise semaphore is already owned
+;*                
+;*         Notes: !!! New for 1.02 !!!
+;*
+;*                - It is recommended that this semaphore should
+;*                  be acquired in the native library init routine.
+;*                  If the acquire attempt fails the init routine
+;*                  might return a non-zero value in A to indicate
+;*                  the failure.
+;*                - This indirect space is not strictly managed by
+;*                  the system. This function is advisory in nature. 
+;*                  Only one native library should use this space at 
+;*                  any point in time.
+;*                - This space could be used for transferring data between
+;*                  libraries but it is completely up to the native
+;*                  library writer to manage access.
+;*
+;*                - The following equates are defined for use by
+;*                  native libraries:
+;*                    SYSTEM_INDIRECT_START - first byte of native library
+;*                                            indirect space.
+;*                    SYSTEM_MAX_INDIRECT   - total number of indirects
+;*                                            available for native libraries.
+;*
+;*                - Accessing data in indirects, as implied by the term 
+;*                  "indirect", requires the use of R0 or R1 as shown below.
+;*
+;*                  ;
+;*                  ; read a pointer from indirects
+;*                  ;
+;*                  mov  a, #SYSTEM_INDIRECT_START
+;*                  add  a, #MY_DATA_OFFSET
+;*                  mov  R0, a
+;*                  ;
+;*                  mov  dpl, @R0 ; read our data
+;*                  inc  R0
+;*                  mov  dph, @R0
+;*                  inc  R0
+;*                  mov  dpx, @R0
+;*                  ;
+;*                  ; write a pointer to indirects
+;*                  ;
+;*                  mov  a, #SYSTEM_INDIRECT_START
+;*                  add  a, #MY_OTHER_DATA_OFFSET
+;*                  mov  R0, a
+;*                  ;
+;*                  mov  @R0, dpl1 ; write our other data
+;*                  inc  R0
+;*                  mov  @R0, dph1
+;*                  inc  R0
+;*                  mov  @R0, dpx1
+;*
+;****************************************************************************
+;*
+;* Function Name: System_ReleaseIndirectSemaphore
+;*
+;*   Description: Releases semaphore for indirects reserved for native
+;*                libraries. 
+;*
+;*      Input(s): None
+;*
+;*    Outputs(s): None 
+;*                
+;*         Notes: !!! New for 1.02 !!!
+;*
+;****************************************************************************
+;*
+;* Function Name: System_ThreadSleep
+;*
+;*   Description: Forces a thread to go to sleep and resume
+;*                execution (after timeout has elapsed) in this function 
+;*                call.
+;*
+;*      Input(s): R3:R2:R1:R0 - timeout value 
+;*                A - non-zero means suspend
+;*
+;*    Outputs(s): None
+;*
+;*         Notes: !!! New for 1.02 !!!
+;*
+;*                A specific sequence of events must be executed in order
+;*                to sleep from a native method.
+;*
+;*                1) Save Java state. This only needs to be done one time
+;*                   per native method invokation. The native method
+;*                   can sleep and resume any number of times after the 
+;*                   Java state has been saved. 
+;*                   *** See System_SaveJavaThreadState ***
+;*                -------------------------------------------------------
+;*                ---------- Repeat as many times as necessary ----------
+;*                -------------------------------------------------------
+;*                2) Push any and all registers that need to be preserved
+;*                   *across* the sleep.
+;*                3) Call System_ThreadSleep with desired timeout.
+;*                4) Pop all registers that were pushed before the sleep.
+;*                -------------------------------------------------------
+;*                -------------------------------------------------------
+;*                5) Restore Java state before returning to the Java
+;*                   application.
+;*                   *** See System_RestoreJavaThreadState ***
+;*           
+;****************************************************************************
+;*
+;* Function Name: System_ThreadSleep_ExitCriticalSection
+;*
+;*   Description: Forces a thread to go to sleep and resume
+;*                execution in this function call. TINIOS_EXIT_CRITICAL_SECTION
+;*                is called by this function at the last possible point, after 
+;*                the thread table has been updated. This function is useful 
+;*                when suspend / resume race conditions are possible. The 
+;*                caller *MUST* have called TINIOS_ENTER_CRITICAL_SECTION 
+;*                before calling this function.
+;*
+;*      Input(s): R3:R2:R1:R0 - timeout value 
+;*                A - non-zero means sleep forever
+;*
+;*    Outputs(s): None
+;*
+;*         Notes: !!! New for 1.02 !!!
+;*
+;*                See System_ThreadSleep for details on sleeping from a
+;*                native method.
+;*
+;****************************************************************************
+;*
+;* Function Name: System_ThreadResume
+;*
+;*   Description: Resumes a suspended thread. 
+;*
+;*      Input(s): A - Thread Id
+;*                R0 - Process Id
+;*
+;*    Outputs(s): A - 0 if no errors
+;*                    1 if index is invalid
+;*                    2 if thread is not alive
+;*                
+;*         Notes: !!! New for 1.02 !!!
+;*
+;*                See System_ThreadSleep for details on sleeping from a
+;*                native method.
+;*
+;****************************************************************************
+;*
+;* Function Name: System_SaveJavaThreadState
+;*
+;*   Description: Saves Java state for current thread.
+;*
+;*      Input(s): None
+;*
+;*    Outputs(s): A - is destroyed 
+;*                
+;*         Notes: !!! New for 1.02 !!!
+;*
+;*                Used to save state when suspending/sleeping in native. 
+;*
+;*                See System_ThreadSleep for details on sleeping from a
+;*                native method.
+;*  
+;****************************************************************************
+;*
+;* Function Name: System_RestoreJavaThreadState
+;*
+;*   Description: Restores Java state for current thread.
+;*
+;*      Input(s): None
+;*
+;*    Outputs(s): A - is destroyed
+;*                
+;*         Notes: !!! New for 1.02 !!!
+;*
+;*                Used to restore state when suspending/sleeping in native. 
+;*
+;*                See System_ThreadSleep for details on sleeping from a
+;*                native method.
+;*  
+;****************************************************************************
+;*
+;* Function Name: System_ProcessSleep
+;*
+;*   Description: Suspend execution of the current process for the specified 
+;*                number of milliseconds.
+;*
+;*      Input(s): R3:R2:R1:R0 - number of milliseconds to sleep 
+;*
+;*     Output(s): None 
+;*                
+;*         Notes: !!! New for 1.02 !!!
+;*
+;*                System_ProcessSleep will suspend execution for at least 
+;*                the requested number of milliseconds. 
+;*  
+;****************************************************************************
+;*
+;* Function Name: System_ProcessSleep_ExitCriticalSection
+;*
+;*   Description: Suspend execution of the current process for the specified 
+;*                number of milliseconds. TINIOS_EXIT_CRITICAL_SECTION
+;*                is called by this function at the last possible point, 
+;*                after the process table has been updated. This function 
+;*                is useful when suspend / resume race conditions are 
+;*                possible. The caller *MUST* have called 
+;*                TINIOS_ENTER_CRITICAL_SECTION before calling this function.
+;*
+;*      Input(s): R3:R2:R1:R0 - number of milliseconds to sleep 
+;*
+;*     Output(s): None 
+;*                
+;*         Notes: !!! New for 1.02 !!!
+;*
+;*                System_ProcessSleep will suspend execution for at least 
+;*                the requested number of milliseconds. 
+;*  
+;****************************************************************************
+;*
+;* Function Name: System_ProcessYield
+;*
+;*   Description: Suspend the currently executing process. The process will 
+;*                remain in the ready state. This is called by a process 
+;*                willing to abandon the rest of its time slice.
+;*
+;*      Input(s): None
+;*
+;*     Output(s): None 
+;*                
+;*         Notes: !!! New for 1.02 !!!
+;*
+;****************************************************************************
+;*
+;* Function Name: System_ProcessSuspend
+;*
+;*   Description: Put the current process to sleep forever.
+;*
+;*      Input(s): None
+;*
+;*     Output(s): None
+;*               
+;*         Notes: !!! New for 1.02 !!!
+;*
+;****************************************************************************
+;*
+;* Function Name: System_ProcessResume
+;*
+;*   Description: Resume up a specified process. 
+;*
+;*      Input(s): A - id of the process to wake up
+;*
+;*     Output(s): None
+;*               
+;*         Notes: !!! New for 1.02 !!!
+;*
+;****************************************************************************
+;*
+;* Function Name: System_GetUptimeMillis
+;*
+;*   Description: Return the number of milliseconds the system has been up. 
+;*
+;*      Input(s): None 
+;*
+;*     Output(s): R4:R3:R2:R1:R0 - milliseconds of up time
+;*                
+;*         Notes: !!! New for 1.02 !!!
+;*
+;****************************************************************************
+;*
+;* Function Name: System_RegisterPoll
+;*
+;*   Description: Registers a method to be called on Poll
+;*                This method will be called every 4ms(approx)
+;*
+;*      Input(s): DPX:DPH:DPL - pointer to function to be called on poll
+;*
+;*    Outputs(s): A - 0 on success
+;*
+;*         Notes: None
+;*
+;***************************************************************************
+;*
+;* Function Name: System_RemovePoll
+;*
+;*   Description: Removes a registered poll method.
+;*
+;*      Input(s): DPX:DPH:DPL - pointer to function to be removed
+;*
+;*    Outputs(s): A - 0 on success
+;*
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: System_GetCurrentThreadId
+;*
+;*   Description: returns the current thread id
+;*
+;*      Input(s): None
+;*
+;*    Outputs(s): A - thread id        - no error
+;*                  - MAX_THREADS (16) - error
+;*                
+;*         Notes: None
+;*
+;;****************************************************************************
+;*
+;* Function Name: System_GetCurrentProcessId
+;*
+;*   Description: Return the id of the currently executing procedd.
+;*
+;*      Input(s): None
+;*
+;*     Output(s): A - id of the currently executing process 
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: System_InstallInterrupt
+;*
+;*   Description: Installs an interrupt. Replaces the current interrupt
+;*
+;*      Input(s): A - Interrupt offset, example a = 0x3b for serial1 ISR
+;*                DPX1:DPH1:DPL1 - Pointer to interrupt to install
+;*
+;*    Outputs(s): A - 0 on success
+;*                DPX:DPH:DPL - pointer to original interrupt
+;*
+;*         Notes: - To reinstall the previous interrupt you must call this
+;*                  function again with the original interrupt address. Caller 
+;*                  is responsible for enabling the interrupt generation.
+;*                - Threads should not be suspended or resumed from an ISR.
+;*                  This can lead to a race condition (resume called before
+;*                  suspend) which could lead to thread deadlock. IO_Poll
+;*                  should be used to suspend and/or resume threads.
+;*
+;****************************************************************************
+;*
+;* Function Name: System_RegisterExternalInterrupt
+;*
+;*   Description: Chains a function for External Interrupt 1 
+;*
+;*      Input(s): A - 0 if invoked on behalf of a Java process
+;*                DPX:DPH:DPL - address of isr routine to be chained
+;*
+;*    Outputs(s): A - 0 on success
+;*
+;*         Notes: Native libraries MUST call this with A = 1
+;*
+;****************************************************************************
+;*
+;* Function Name: System_UnregisterExternalInterrupt
+;*
+;*   Description: Removes an External Interrupt 1 function from the
+;*                chain. 
+;*
+;*      Input(s): A - 0 if invoked on behalf of a Java process
+;*                DPX:DPH:DPL - address of isr routine to be removed
+;*
+;*    Outputs(s): A - 0 on success
+;*
+;*         Notes: Native libraries MUST call this with A = 1
+;*
+;****************************************************************************
+;*
+;* Function Name: System_WriteFlashByte
+;*
+;*   Description: Writes a byte of data to flash.
+;*
+;*      Input(s): DPX:DPH:DPL - pointer to destination address
+;*                A - data to be written  
+;*
+;*    Outputs(s): A - 0 on success
+;*
+;*         Notes: - Not guaranteed to work on any flash memory except the part
+;*                  number used on the TINI stick (currently AMD AM29F040B).
+;*                - No checks for valid address.
+;*                - The value should be read first and checked to make
+;*                  sure the initial value is 0ffh. Flash bits can only
+;*                  be changed from 1 to 0. Unpredictable things can happen
+;*                  if you attempt to change a 0 to 1 (see flash data sheet). 
+;*                - This function WILL NOT RETURN if the flash does not 
+;*                  validate. The reason for this is the flash cannot
+;*                  be read just after a byte is programmed. Therefore
+;*                  a chunk of code is copied to RAM and the programming
+;*                  and verification is executed from RAM. There is no 
+;*                  reason to return from RAM to flash if the flash is
+;*                  in programming mode (AKA La-La Land) because the opcodes
+;*                  to be executed cannot be read from flash memory.
+;*
+;****************************************************************************
+
+Utility
+-=====-
+;****************************************************************************
+;*
+;* Function Name: Add_Dptr1
+;*
+;*   Description: Add the contents of the accumulator to dptr1. 
+;*
+;*      Input(s): A - addend1 
+;*                DPX:DPH:DPL - addend2
+;*
+;*    Outputs(s): DPX:DPH:DPL - (DPX:DPH:DPL + A)
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: Add_Dptr2
+;*
+;*   Description: Add the contents of the accumulator to dptr2. 
+;*
+;*      Input(s): A - addend1
+;*                DPX1:DPH1:DPL1 - addend2
+;*
+;*    Outputs(s): DPX1:DPH1:DPL1 - (DPX1:DPH1:DPL1 + A)
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: Add_Dptr1_16
+;*
+;*   Description: Add the contents of 16 bit value in B:A to dptr1. 
+;*
+;*      Input(s): A - addend1 (low byte)
+;*                B - addend1 (high byte)
+;*                DPX:DPH:DPL - addend2
+;*
+;*    Outputs(s): DPX:DPH:DPL - (DPX:DPH:DPL + B:A)
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: Add_Dptr2_16
+;*
+;*   Description: Add the contents of 16 bit value in B:A to dptr1. 
+;*
+;*      Input(s): A - addend1 (low byte)
+;*                B - addend1 (high byte)
+;*                DPX:DPH:DPL - addend2
+;*
+;*    Outputs(s): DPX:DPH:DPL - (DPX:DPH:DPL + B:A)
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: Add_Dptr1_24
+;*
+;*   Description: Add the contents of R2:R1:R0 to dptr1. 
+;*
+;*      Input(s): R2:R1:R0 - addend1
+;*                DPX:DPH:DPL - addend2
+;*
+;*    Outputs(s): DPX:DPH:DPL - (DPX:DPH:DPL + R2:R1:R0) 
+;*                
+;*         Notes: None
+;*                
+;****************************************************************************
+;*
+;* Function Name: Add_Dptr2_24
+;*
+;*   Description: Add the contents of R2:R1:R0 to dptr2. 
+;*
+;*      Input(s): R2:R1:R0 - addend1
+;*                DPX1:DPH1:DPL1 - addend2
+;*
+;*    Outputs(s): DPX1:DPH1:DPL1 - (DPX1:DPH1:DPL1 + R2:R1:R0) 
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: Sub_Dptr1
+;*
+;*   Description: Subtract the contents of the accumulator from dptr1. 
+;*
+;*      Input(s): A - minuend
+;*                DPX:DPH:DPL - subtrahend
+;*
+;*    Outputs(s): DPX:DPH:DPL - (DPX:DPH:DPL - A)
+;*                
+;*         Notes: None
+;*                
+;****************************************************************************
+;*
+;* Function Name: Sub_Dptr1_16
+;*
+;*   Description: Subtract the contents of the accumulator from dptr1. 
+;*
+;*      Input(s): B:A - minuend
+;*                DPX:DPH:DPL - subtrahend
+;*
+;*    Outputs(s): DPX:DPH:DPL - (DPX:DPH:DPL - B:A)
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: Sub_Dptr2
+;*
+;*   Description: Subtract the contents of the accumulator from dptr2. 
+;*
+;*      Input(s): A - minuend
+;*                DPX1:DPH1:DPL1 - subtrahend
+;*
+;*    Outputs(s): DPX1:DPH1:DPL1 - (DPX1:DPH1:DPL1 - A)
+;*                
+;*         Notes: None
+;*                
+;****************************************************************************
+;*
+;* Function Name: Sub_Dptr2_16
+;*
+;*   Description: Subtract the contents of the accumulator from dptr2. 
+;*
+;*      Input(s): B:A - minuend
+;*                DPX:DPH:DPL - subtrahend
+;*
+;*    Outputs(s): DPX1:DPH1:DPL1 - (DPX1:DPH1:DPL1 - B:A) 
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: Dec_Dptr1
+;*
+;*   Description: Decrement the contents of DPX:DPH:DPL by 1. 
+;*
+;*      Input(s): DPX:DPH:DPL 
+;*
+;*    Outputs(s): DPX:DPH:DPL - (DPX:DPH:DPL - 1)
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: Compare_Dptr1_24
+;*
+;*   Description: Compare data pointer with 24-bit value 
+;*
+;*      Input(s): DPX:DPH:DPL - pointer to be compared 
+;*                R2:R1:R0 - comparison value
+;*
+;*    Outputs(s): c - set   if (DPX:DPH:DPL < R2:R1:R0), 
+;*                    clear otherwise 
+;*                
+;*         Notes: None
+;*               
+;****************************************************************************
+;*
+;* Function Name: Mem_Clear
+;*
+;*   Description: Clear movx memory
+;*
+;*      Input(s): A - byte count
+;*                DPX:DPH:DPL - pointer to 1st byte 
+;*
+;*    Outputs(s): None 
+;*                
+;*         Notes: No checks for end of MOVX memory are made. 
+;*
+;****************************************************************************
+;*
+;* Function Name: Mem_Clear_16
+;*
+;*   Description: Clear movx memory
+;*
+;*      Input(s): B:A - byte count
+;*                DPX:DPH:DPL - pointer to 1st byte 
+;*
+;*    Outputs(s): None 
+;*                
+;*         Notes: No checks for end of MOVX memory are made. 
+;*
+;****************************************************************************
+;*
+;* Function Name: Mem_Copy
+;*
+;*   Description: Copy external memory buffer. 
+;*
+;*      Input(s): DPX:DPH:DPL - pointer to source buffer
+;*                DPX1:DPH1:DPL1 - pointer to target buffer
+;*                A - byte count
+;*
+;*    Outputs(s): None 
+;*                
+;*         Notes: No checks for end of MOVX memory are made. DPX:DPH:DPL and 
+;*                DPX1:DPH1:DPL1 point to 1 past the end of their respective 
+;*                buffers on return.
+;*                
+;*                A = 0 on entry copies 256 bytes.
+;*                
+;****************************************************************************
+;*
+;* Function Name: Mem_Copy_16
+;*
+;*   Description: Copy external memory buffer. 
+;*
+;*      Input(s): DPX:DPH:DPL - pointer to source buffer
+;*                DPX1:DPH1:DPL1 - pointer to target buffer
+;*                B:A - byte count 
+;*
+;*    Outputs(s): None 
+;*                
+;*         Notes: No checks for end of MOVX memory are made. DPX:DPH:DPL and 
+;*                DPX1:DPH1:DPL1 point to 1 past the end of their respective 
+;*                buffers on return.
+;*                Regular loop - auto inc dps (20% improvement)
+;*                auto inc dps - unrolled loop by 4 (14% improvement)
+;*                
+;****************************************************************************
+;*
+;* Function Name: Mem_Copy_16_ND
+;*
+;*   Description: Copy external memory buffer same as mem_copy_16 except
+;*		  it saves the DPX:DPH:DPL and DPX1:DPH1:DPL1 registers.
+;*
+;*      Input(s): DPX:DPH:DPL - pointer to source buffer
+;*                DPX1:DPH1:DPL1 - pointer to target buffer
+;*                B:A - byte count
+;*
+;*    Outputs(s): None 
+;*                
+;*         Notes: No checks for end of MOVX memory are made. DPX:DPH:DPL and 
+;*                DPX1:DPH1:DPL1 point to the input locations.
+;*                
+;****************************************************************************
+;*
+;* Function Name: Mem_Compare_XData
+;*
+;*   Description: Compare 2 external memory buffers.
+;*
+;*      Input(s): DPX:DPH:DPL - pointer to buffer 1
+;*                DPX1:DPH1:DPL1 - pointer to buffer 2
+;*                B:A - byte count
+;*
+;*    Outputs(s): A - 0 if buffers are identical
+;*                
+;*         Notes: Make sure that B = 0 if you want to compare less than
+;*                256 bytes.
+;*                
+;****************************************************************************
+;*
+;* Function Name: CRC16
+;*
+;*   Description: Compute crc16 of a byte given an initial crc value. 
+;*
+;*      Input(s): A - byte to crc 
+;*                R1:R0 - MSB:LSB crc value 
+;*
+;*    Outputs(s): R1:R0 - MSB:LSB crc value
+;*                
+;*         Notes: None
+;*               
+;****************************************************************************
+
+Debug
+-===-
+NOTE: The following debug functions send output at 115200 bps to TINI's 
+      diagnostic port. On the E?? Socket boards the diagnostic port is 
+      labelled J11 and can be enabled by placing Q2 (BSS84) and R14 (3.3K).
+      Pin-1 is ground, pin-2 is for transmit data from the terminal
+      (PC) and pin-3 is the data out from TINI.
+;****************************************************************************
+;*
+;* Function Name: Info_SendString
+;*
+;*   Description: Send an ASCII null terminated string out port.  String 
+;*                must be in code space.
+;*
+;*      Input(s): DPX:DPH:DPL - pointer to string to send in code space
+;*
+;*    Outputs(s): DPX:DPH:DPL is destroyed
+;*
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: Info_SendTwoHex
+;*
+;*   Description: Send hexadecimal byte.
+;*
+;*      Input(s): A - byte to send
+;*
+;*    Outputs(s): None
+;*
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: Info_SendCRLF
+;*
+;*   Description: Send end of line characters.
+;*
+;*      Input(s): None 
+;*
+;*    Outputs(s): None
+;*
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: Info_Send1152
+;*
+;*   Description: Send a byte in its ASCII representation. 
+;*
+;*      Input(s): A - byte to send
+;*
+;*    Outputs(s): None
+;*
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: Debug_DumpDataPointer1
+;*
+;*   Description: Dumps the value of the second data pointer. 
+;*
+;*      Input(s): DPX:DPH:DPL 
+;*
+;*    Outputs(s): None 
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: Debug_DumpDataPointer2
+;*
+;*   Description: Dumps the value of the second data pointer. 
+;*
+;*      Input(s): DPX1:DPH1:DPL1 
+;*
+;*    Outputs(s): None
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: Debug_DumpBA
+;*
+;*   Description: Dumps B:A as a sixteen bit value. 
+;*
+;*      Input(s): B:A 
+;*
+;*    Outputs(s): None
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: Debug_DumpCurrentRegisterBank
+;*
+;*   Description: Dumps all 8 registers in currently selected bank. 
+;*
+;*      Input(s): R7:R6:R5:R4:R3:R2:R1:R0 
+;*
+;*    Outputs(s): None
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: Debug_DumpRegisterBank0
+;*
+;*   Description: Dumps all 8 registers in register bank 0. 
+;*
+;*      Input(s): R7_B0:R6_B0:...:R0_B0
+;*
+;*    Outputs(s): None
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: Debug_DumpRegisterBank1
+;*
+;*   Description: Dumps all 8 registers in register bank 1. 
+;*
+;*      Input(s): R7_B1:R6_B1:...:R0_B1
+;*
+;*    Outputs(s): None
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: Debug_DumpRegisterBank2
+;*
+;*   Description: Dumps all 8 registers in register bank 2. 
+;*
+;*      Input(s): R7_B2:R6_B2:...:R0_B2
+;*
+;*    Outputs(s): None
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+;*
+;* Function Name: Debug_DumpRegisterBank3
+;*
+;*   Description: Dumps all 8 registers in register bank 3. 
+;*
+;*      Input(s): R7_B3:R6_B3:...:R0_B3
+;*
+;*    Outputs(s): None
+;*                
+;*         Notes: None
+;*
+;****************************************************************************
+-========-

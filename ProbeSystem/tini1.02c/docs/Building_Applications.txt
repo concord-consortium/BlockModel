@@ -1,0 +1,118 @@
+Building_Applications.txt (DC, 09.14.01)
+
+-=---------------=-
+TINI Firmware 1.02c
+-=---------------=-
+--------------------------------------------------------------------
+Go to http://www.ibutton.com/TINI/book.html for an online version of 
+"The TINI Specification and Developer's Guide".
+--------------------------------------------------------------------
+
+-=-----------------------------------------------=-
+Building a TINI Executable to run on the TINI Board
+-=-----------------------------------------------=-
+
+1. Compile your application.
+
+    You must build your application against the TINI API instead of the normal
+    JDK API. The TINI API classes are located in tiniclasses.jar.
+   
+    There are several different ways to do this depending on your development
+    tools:
+
+    a). IDE
+         For Visual Cafe: Under the Project-Options menu, select the Directory
+         tab and uncheck the two options at the bottom. Then in the "Show
+         directories for" drop down box, select "Input class files" and add
+         tiniclasses.jar and the directory you're building from.
+         Then rebuild all.
+
+       Other tools have similar options.
+
+    b). JDK
+         Specify the bootstrap classes:
+
+           In JDK 1.2, you can specify the bootclasspath option to point to
+           the TINI API.  For example: 
+
+             javac -bootclasspath <TINI Install Dir>\tiniclasses.jar Hello.java
+
+           In JDK 1.1, you put the TINI API classes in place of classes.zip:
+
+             javac -classpath <TINI Install Dir>\tiniclasses.jar Hello.java
+
+2. Build a TINI executable file.
+
+    First, be sure your classpath includes tini.jar. This file contains the
+    tools TINIConvertor and JavaKit.  It must show up before JiB.jar, which 
+    was distributed with older alpha kit releases and also comes with iB-IDE, 
+    our Java iButton development kit.
+
+    If you are using JDK 1.2, you can choose to put tini.jar in the
+    <jdk 1.2>\jre\lib\ext directory.  Any jar files in this directory will
+    automatically be prepended to your classpath.  This means that you do
+    not have to specifically list that jar file in your classpath to be
+    able to use the classes it contains.
+
+    For a single class file, type:
+
+      java TINIConvertor -f Filename.class -o Filename.tini -d <TINI Install Dir>\firmware\tini.db
+
+    If you have a collection of class files, put all the class files alone into
+    one directory (we'll call it mydir) and type:
+
+      java TINIConvertor -f mydir -o Filename.tini -d <TINI Install Dir>\firmware\tini.db
+
+    If you want to attach a native library to your application use the "-n" 
+    switch. The command line will look something like this:
+
+      java TINIConvertor -n Libname.tlib -f Filename.class -o Filename.tini -d <TINI Install Dir>\firmware\tini.db
+  
+    If you want to run the executable from slush, FTP this file to TINI and
+    execute it through a Telnet or serial connection.
+
+    If you want to set your executable as the default exec image (replacing the
+    slush shell), add the switch "-l" to the above TINIConvertor and change
+    "-o Filename.tini" to "-o Filename.tbin".  See README.txt for information
+    on loading this file into Bank 7 of flash ROM.
+
+
+Tips for your programs:
+=---------------------=
+1. a) There are some issues related to threading that you should take into
+      consideration. 
+      - All threads run at the same priority.
+      - There is a limit of 16 threads per process (including the primordial
+        thread).
+
+   b) Threads can block on I/O thus increasing CPU cycle availablity to other
+      threads and processes.  Network threads will block on accept() until a
+      connection is established.  Reads will block until data is received.
+
+2. See API_Diffs.txt for differences between Sun's 1.1 API and the current
+   TINI API.
+
+3. A quick and non memory consuming way to print the amount of free RAM is:
+   com.dalsemi.system.Debug.intDump(TINIOS.getFreeRAM());
+
+4. System.out.println()'s consume lots of memory.
+
+5. If you consume large amounts of memory, esp. in iteration-based loops, it
+   is a good idea to call the garbage collector periodically yourself with
+   'System.gc();'.  The garbage collector will kick off automatically when
+   memory dips below a certain threshhold, but major garbage collection during
+   program run will cause the collector to run for long periods of time in the
+   background.  Do NOT call the GC in a tight loop for performance reasons.
+
+6. Print a banner - make one of the first lines of your program a println of
+   some kind so you know right off if your program is running.  If you do not
+   see this line, it is possible your heap is in an unknown state.  You may
+   want to clear out the heap.
+
+7. Check com.dalsemi.system.ArrayUtils for various fast array comparison/fill
+   methods.
+
+8. See Limitations.txt for a partial list of TINI limitations.
+
+9. See Versions.txt to verify you are using the correct version of TINI's 
+   firmware, tools, etc.

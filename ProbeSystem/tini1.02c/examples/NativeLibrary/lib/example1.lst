@@ -1,0 +1,758 @@
+                     
+                     ;**********************************************************
+                     ;*
+                     ;*  Copyright (C) 2000 Dallas Semiconductor Corporation. 
+                     ;*  All rights Reserved. Printed in U.S.A.
+                     ;*  This software is protected by copyright laws of
+                     ;*  the United States and of foreign countries.
+                     ;*  This material may also be protected by patent laws of t
+                     ;*  and of foreign countries.
+                     ;*  This software is furnished under a license agreement an
+                     ;*  nondisclosure agreement and may only be used or copied 
+                     ;*  with the terms of those agreements.
+                     ;*  The mere transfer of this software does not imply any l
+                     ;*  of trade secrets, proprietary technology, copyrights, p
+                     ;*  trademarks, maskwork rights, or any other form of intel
+                     ;*  property whatsoever. Dallas Semiconductor retains all o
+                     ;*
+                     ;*     Module Name: Example1
+                     ;*
+                     ;*     Description: Native library example
+                     ;*
+                     ;*        Filename: Example1.a51
+                     ;*
+                     ;* Dependant Files: tini.inc, ds80c390.inc, tinimacro.inc a
+                     ;*
+                     ;*          Author: Chenot 
+                     ;*
+                     ;*           Tools: macro + a390
+                     ;*
+                     ;*         Version: 0.01 
+                     ;*
+                     ;*         Created: 05/19/2000 
+                     ;*
+                     ;*   Modifications: 11/00 - changed LoadPointer calls to Lo
+                     ;*                        - added support for "indirect" re
+                     ;*                        - added process destroy function
+                     ;*                        - added sleep example 
+                     ;*                  
+                     ;*           Notes: Native library rules:
+                     ;*                  - No ACalls or AJmps -> this module can
+                     ;*                  - The module must be contiguous. No ORG
+                     ;*                    allowed. The module offsets are autom
+                     ;*                    set to zero by the assembler.
+                     ;*                  - There are absolutely no directs that 
+                     ;*                    across method calls. Certain ranges o
+                     ;*                    reserved for global system variables.
+                     ;*                    process swapped at any time. Touch th
+                     ;*                    scrog the system!!!
+                     ;*                    At the time this was written this inc
+                     ;*                    20h-21h and 68h and above.
+                     ;*                    All other directs MUST be returned to
+                     ;*                    state that they were in before the me
+                     ;*                  - Indirects are reserved for system use
+                     ;*                    and you scrog the system!!! As of rel
+                     ;*                    of "indirects" have been reserved for
+                     ;*                    See Native_Methods.txt for details.
+                     ;*                  - Register banks 0, 1 and 3 are free fo
+                     ;*                    Register bank 2 can only be used afte
+                     ;*                    parameters are removed from the Java 
+                     ;*                  - The file tini.inc contains the addres
+                     ;*                    exported systems functions. These are
+                     ;*                    that are tied to a specific firmware 
+                     ;*                    module MUST be reassembled for other 
+                     ;*                  - The file apiequ.inc contains the numb
+                     ;*                    exceptions and class numbers. These a
+                     ;*                    tied to a specific firmware release. 
+                     ;*                    be reassembled with this file for eac
+                     ;*                  - Threads in native methods are not aut
+                     ;*                    swapped by the thread scheduler. Deta
+                     ;*                    from native methods are contained in 
+                     ;*                  - We reserve the right to change these 
+                     ;*                    releases.
+                     ;*                  - See the native method Readme file in 
+                     ;*                    for more details.
+                     ;*
+                     ;**********************************************************
+                     ;
+                     ; $Workfile: example1.a51 $
+                     ; $Revision: 11 $ 
+                     ; $Date: 9/13/01 10:15a $ 
+                     ; $Author: Chenot $ 
+                     ; $Modtime: 9/13/01 10:05a $
+                     ;
+                     ;
+                     $include(tini.inc)
+                     $include(ds80c390.inc)
+                     $include(tinimacro.inc)
+                     $include(apiequ.inc)
+                     ;
+                     ;**********************************************************
+                     ;*
+                     ;* Function Name: Example1_Init
+                     ;*
+                     ;*   Description: Initialization routine
+                     ;*
+                     ;*      Input(s): None
+                     ;*
+                     ;*    Outputs(s): A - 0 if success
+                     ;*                
+                     ;*         Notes: Every TINI library is required to have an
+                     ;*                function and the initialization routine M
+                     ;*                at offset zero into the file. This functi
+                     ;*                end of the Java load/loadLibrary method i
+                     ;*                this init routine returns with any non-ze
+                     ;*                the load will fail with an UnsatisfiedLin
+                     ;*                function should be used to malloc memory 
+                     ;*                data/hardware.
+                     ;*                This function will be called each time lo
+                     ;*                is called. State should be checked in ord
+                     ;*                whether or not initialization is required
+                     ;*
+                     ;*                The minimum init routine must include:
+                     ;*                  clr a
+                     ;*                  ret
+                     ;*
+                     ;* *** This routine must exist ***
+                     ;* *** This routine must exist ***
+                     ;* *** This routine must exist ***
+                     ;* *** This routine must be at offset 0 ***
+                     ;* *** This routine must be at offset 0 ***
+                     ;* *** This routine must be at offset 0 ***
+                     ;*
+                     ;**********************************************************
+                     Example1_Init:
+000000: 74 10          mov   a,#010h  ; see if there are enough indirects
+000002: B4 08 00       cjne  a,#08h,$+3               ;
+000005: 50 06          jnc   Init_HaveEnoughRegisters ;
+                     
+000007: 74 FF          mov   a,#0FFh                 ; return error code
+000009: 02 00 00 90    ljmp  Init_Done                ;
+                     
+                     Init_HaveEnoughRegisters:
+00000D: 12 03 BB 32    lcall 03BB32h
+000011: 60 06          jz    Init_RegisterDestroyFunction
+                     
+000013: 74 FE          mov   a,#0FEh                 ; return error code
+000015: 02 00 00 90    ljmp  Init_Done                ;
+                     
+                     Init_RegisterDestroyFunction:
+000019: 90 00 01 79    mov   dptr,#Process_Destroy_Function
+00001D: 12 01 1A 28    lcall 011A28h
+000021: 60 0A          jz    Init_GetEphemeralStateBlock
+                     
+000023: 12 03 BB 4A    lcall 03BB4Ah
+000027: 74 FD          mov   a,#0FDh                 ; return error code
+000029: 02 00 00 90    ljmp  Init_Done                ;
+                     
+                     Init_GetEphemeralStateBlock:
+00002D: 90 00 00 91    mov   dptr,#LibraryID         ; see if we have an ESB ins
+000031: 12 03 B9 5F    lcall 03B95Fh
+                     
+000035: 70 02          jnz   Init_MallocEphemeral     ;
+                     ;
+                     ; an ESB exists - some process
+                     ; has already called load since
+                     ; boot time
+                     ;
+                     Init_StoreRetrieveEphemeral:
+000037: 80 1B          sjmp  Init_TestImmutable       ;
+                     
+                     Init_MallocEphemeral:
+000039: 7A 08          mov   R2,#08h                  ; request 8 bytes
+00003B: 7B 00          mov   R3,#00h                   ;
+00003D: 12 01 B1 22    lcall 01B122h                ;
+000041: 70 4D          jnz   Init_Done                ;
+                     
+000043: 85 82 84       mov   084h,dpl                ; copy address to
+000046: 85 83 85       mov   085h,dph                ;  second dptr
+000049: 85 93 95       mov   095h,093h                ; handle is already in R3:
+                     
+00004C: 90 00 00 91    mov   dptr,#LibraryID         ; first dptr is our identif
+000050: 12 03 B8 3D    lcall 03B83Dh
+                     
+                     Init_TestImmutable:
+000054: 90 00 00 91    mov   dptr,#LibraryID         ; see if there is an ISB in
+000058: 12 03 B7 36    lcall 03B736h
+00005C: 70 0C          jnz   Init_PerformMalloc       ;
+                     ;
+                     ; an ISB exists - some process has
+                     ; called load since the heap was
+                     ; cleared
+                     ;
+                     Init_StoreRetrieveImmutable:
+                       
+                     ; Begin Macro GETX
+00005E: E0                   movx  a, @dptr
+                     ; End Macro GETX
+                     
+00005F: 24 01          add   a,#01h                    ;
+                       
+                     ; Begin Macro PUTX
+000061: F0                   movx  @dptr, a
+                     ; End Macro PUTX
+                     
+000062: A3             inc   dptr                     ;
+                       
+                     ; Begin Macro GETX
+000063: E0                   movx  a, @dptr
+                     ; End Macro GETX
+                     
+000064: 34 00          addc  a,#00h                    ;
+                       
+                     ; Begin Macro PUTX
+000066: F0                   movx  @dptr, a
+                     ; End Macro PUTX
+                     
+000067: E4             clr   a                        ;
+000068: 80 1B          sjmp  Init_ClearIndirects      ;
+                     
+                     Init_PerformMalloc:
+00006A: 7A 02          mov   R2,#02h                  ; request 2 bytes
+00006C: 7B 00          mov   R3,#00h                   ;  for a simple counter
+00006E: 12 01 B1 22    lcall 01B122h                ;
+000072: 70 1C          jnz   Init_Done                ;
+                     
+000074: 85 82 84       mov   084h,dpl                ; copy address to
+000077: 85 83 85       mov   085h,dph                ;  second dptr
+00007A: 85 93 95       mov   095h,093h                ; handle is already in R3:
+                     
+00007D: 90 00 00 91    mov   dptr,#LibraryID         ; first dptr is our identif
+000081: 12 03 B6 14    lcall 03B614h
+                     
+                     Init_ClearIndirects:
+                     ;
+                     ; init indirects
+                     ;
+000085: E4             clr   a                        ; indicate success
+000086: 78 F0          mov   R0,#0F0h
+000088: 75 F0 08       mov   b,#08h                    ;
+                     
+                     Init_Loop: 
+00008B: F6             mov   @R0,a                   ;
+00008C: 08             inc   R0                       ;
+00008D: D5 F0 FB       djnz  b,Init_Loop             ;
+                     
+                     Init_Done:
+000090: 22             ret                            ;
+                     ;**********************************************************
+                     ;*
+                     ;* This is the library identifier that is used to access li
+                     ;* blocks. These state blocks are malloced and freed by the
+                     ;* and inserted into/removed from system state block tables
+                     ;* the InstallStateBlock/RemoveStateBlock functions. The Ge
+                     ;* functions can be used to retrieve both the pointer and h
+                     ;* library's state block. There are two types of state bloc
+                     ;* Immutable. Ephemeral state blocks exist from the time th
+                     ;* until the time the system reboots. They are cleaned up a
+                     ;* at boot time. Immutable state blocks exist until the hea
+                     ;* (B18, F0 at the loader prompt) or until the library remo
+                     ;* from the table and frees the memory.
+                     ;*
+                     ;* This identifier must be exactly 8 bytes long and can be 
+                     ;* 8 byte data.
+                     ;*****************
+                     LibraryID:      ;*
+000091: 44 53        db "DS";*
+000093: 00 00 00 00 
+        00 01        db 0, 0, 0, 0, 0, 1;*
+                     ;*****************
+                     ;**********************************************************
+                     ;*
+                     ;* Function Name: Native_method1
+                     ;*
+                     ;*   Description: public static native int method1(byte[] b
+                     ;*
+                     ;*      Input(s): Byte array reference, long and int on the
+                     ;*
+                     ;*    Outputs(s): A - zero on success, exception number on 
+                     ;*                returns an int in R3:R2:R1:R0, msb:...:ls
+                     ;*                
+                     ;*         Notes: System calls that are documented to retur
+                     ;*                return 0 on success and an exception numb
+                     ;*                In general is is a good idea to exit your
+                     ;*                with this value unless you wish to handle
+                     ;*                in your native method. If wish to generat
+                     ;*                exception in your native method, you may 
+                     ;*                exception equates in apiequ.inc. Simply a
+                     ;*                equate to A just prior to returning to Ja
+                     ;*                On entry to a native method the first DPT
+                     ;*                is selected and RB0 (via PSW) is selected
+                     ;*
+                     ;**********************************************************
+                     Native_method1:
+000099: E4             clr    a                       ; request first parameter
+00009A: 12 03 BB 22    lcall  03BB22h; point to Java buffer
+00009E: 60 04          jz     NM1_PointerIsValid      ;
+                     
+0000A0: 02 00 01 02    ljmp   NM1_Exit                ;
+                     
+                     NM1_PointerIsValid:
+0000A4: E8             mov    a,R0                   ; check the array length
+0000A5: 49             orl    a,R1                   ;
+0000A6: 4A             orl    a,R2                   ;
+0000A7: 4B             orl    a,R3                   ;
+0000A8: 60 1E          jz     NM1_GetNextParams       ; 
+                     
+                     ;
+                     ; pointing to data - let's just jam
+                     ; some bytes into this buffer
+                     ;
+0000AA: 75 F0 55       mov    b,#055h                 ;
+0000AD: E8             mov    a,R0                   ;
+0000AE: 60 02          jz     NM1_TestR1R0            ;
+                     
+0000B0: 05 01          inc    01h                   ;
+                     ;
+                     ; we must adjust the loop variables first
+                     ;
+                     NM1_TestR1R0:
+0000B2: E9             mov    a,R1                   ;
+0000B3: 60 02          jz     NM1_TestR2R1R0          ;
+                     
+0000B5: 05 02          inc    02h                   ;
+                     
+                     NM1_TestR2R1R0:
+0000B7: EA             mov    a,R2                   ;
+0000B8: 60 02          jz     NM1_BuffSetGo           ;
+                     
+0000BA: 05 03          inc    03h                   ;
+                     
+                     NM1_BuffSetGo:
+0000BC: E5 F0          mov    a,b                    ;
+                     
+                     NM1_Loop:
+                       
+                     ; Begin Macro PUTX
+0000BE: F0                   movx  @dptr, a
+                     ; End Macro PUTX
+                     
+0000BF: A3             inc    dptr                    ;  
+0000C0: D8 FC          djnz   R0,NM1_Loop            ; currently Java array leng
+0000C2: D9 FA          djnz   R1,NM1_Loop            ;  in length but this will 
+0000C4: DA F8          djnz   R2,NM1_Loop            ;  for all future releases.
+0000C6: DB F6          djnz   R3,NM1_Loop            ;  currently set to zero by
+                                                      ;  NatLib_LoadJavaByteArra
+                     NM1_GetNextParams:
+0000C8: 74 01          mov    a,#01h                   ;
+0000CA: 12 03 BA 95    lcall  03BA95h; point to wide parameter
+                     
+0000CE: 90 00 00 91    mov   dptr,#LibraryID         ; save this param 
+0000D2: C0 02          push  02h                    ; preserve registers
+0000D4: C0 03          push  03h                    ; - we don't need the handle
+0000D6: 12 03 B9 5F    lcall 03B95Fh ; in the state block
+0000DA: D0 03          pop   03h                    ; restore registers
+0000DC: D0 02          pop   02h                    ;
+0000DE: 60 04          jz    NM1_HaveStateBlock       ;
+                     
+0000E0: 74 2C          mov   a,#02Ch
+0000E2: 80 1E          sjmp  NM1_Exit                 ;
+                     
+                     NM1_HaveStateBlock:
+0000E4: E8             mov   a,R0                    ; write it to our state buf
+                       
+                     ; Begin Macro PUTX
+0000E5: F0                   movx  @dptr, a
+                     ; End Macro PUTX
+                     
+0000E6: A3             inc   dptr                     ;
+0000E7: E9             mov   a,R1                    ; 
+                       
+                     ; Begin Macro PUTX
+0000E8: F0                   movx  @dptr, a
+                     ; End Macro PUTX
+                     
+0000E9: A3             inc   dptr                     ;
+0000EA: EA             mov   a,R2                    ; 
+                       
+                     ; Begin Macro PUTX
+0000EB: F0                   movx  @dptr, a
+                     ; End Macro PUTX
+                     
+0000EC: A3             inc   dptr                     ;
+0000ED: EB             mov   a,R3                    ; 
+                       
+                     ; Begin Macro PUTX
+0000EE: F0                   movx  @dptr, a
+                     ; End Macro PUTX
+                     
+0000EF: A3             inc   dptr                     ;
+0000F0: EC             mov   a,R4                    ; 
+                       
+                     ; Begin Macro PUTX
+0000F1: F0                   movx  @dptr, a
+                     ; End Macro PUTX
+                     
+0000F2: A3             inc   dptr                     ;
+0000F3: ED             mov   a,R5                    ; 
+                       
+                     ; Begin Macro PUTX
+0000F4: F0                   movx  @dptr, a
+                     ; End Macro PUTX
+                     
+0000F5: A3             inc   dptr                     ;
+0000F6: EE             mov   a,R6                    ; 
+                       
+                     ; Begin Macro PUTX
+0000F7: F0                   movx  @dptr, a
+                     ; End Macro PUTX
+                     
+0000F8: A3             inc   dptr                     ;
+0000F9: EF             mov   a,R7                    ; 
+                       
+                     ; Begin Macro PUTX
+0000FA: F0                   movx  @dptr, a
+                     ; End Macro PUTX
+                     
+                     
+0000FB: 74 03          mov    a,#03h                   ;
+0000FD: 12 03 BA 66    lcall  03BA66h    ; point to parameter
+                     ;
+                     ; we just popped the param into
+                     ; R3:R0 - let's just return them
+                     ; as the result
+                     ;
+000101: E4             clr  a                         ; indicate "no exception"
+                     
+                     NM1_Exit:
+000102: 22             ret                            ;
+                     ;**********************************************************
+                     ;*
+                     ;* Function Name: Native_method2
+                     ;*
+                     ;*   Description: public native long method2(void)
+                     ;*
+                     ;*      Input(s): "this" reference on the Java stack
+                     ;*
+                     ;*    Outputs(s): A - zero on success, exception number on 
+                     ;*                returns a long in R7:R6:R5:R4:R3:R2:R1:R0
+                     ;*                
+                     ;*         Notes: System calls that are documented to retur
+                     ;*                return 0 on success and an exception numb
+                     ;*                In general is is a good idea to exit your
+                     ;*                with this value unless you wish to handle
+                     ;*                in your native method. If wish to generat
+                     ;*                exception in your native method, you may 
+                     ;*                exception equates in apiequ.inc. Simply a
+                     ;*                equate to A just prior to returning to Ja
+                     ;*
+                     ;**********************************************************
+                     Native_method2:
+                     ;
+                     ; NOTE: this is a virtual method so we could
+                     ;       pop the "this" reference off of the
+                     ;       Java stack if we so desired.
+                     ;
+000103: 90 00 00 91    mov   dptr,#LibraryID         ; lets save this param 
+000107: 12 03 B9 5F    lcall 03B95Fh ; in the state block
+00010B: 60 04          jz    NM2_HaveStateBlock       ;
+                     
+00010D: 74 2C          mov   a,#02Ch
+00010F: 80 18          sjmp  NM2_Exit                 ;
+                     
+                     NM2_HaveStateBlock:
+                     ;
+                     ; get the return value from the buffer 
+                     ;
+                       
+                     ; Begin Macro GETX
+000111: E0                   movx  a, @dptr
+                     ; End Macro GETX
+                     
+000112: F8             mov   R0,a                    ;
+000113: A3             inc   dptr                     ;
+                       
+                     ; Begin Macro GETX
+000114: E0                   movx  a, @dptr
+                     ; End Macro GETX
+                     
+000115: F9             mov   R1,a                    ;
+000116: A3             inc   dptr                     ;
+                       
+                     ; Begin Macro GETX
+000117: E0                   movx  a, @dptr
+                     ; End Macro GETX
+                     
+000118: FA             mov   R2,a                    ;
+000119: A3             inc   dptr                     ;
+                       
+                     ; Begin Macro GETX
+00011A: E0                   movx  a, @dptr
+                     ; End Macro GETX
+                     
+00011B: FB             mov   R3,a                    ;
+00011C: A3             inc   dptr                     ;
+                       
+                     ; Begin Macro GETX
+00011D: E0                   movx  a, @dptr
+                     ; End Macro GETX
+                     
+00011E: FC             mov   R4,a                    ;
+00011F: A3             inc   dptr                     ;
+                       
+                     ; Begin Macro GETX
+000120: E0                   movx  a, @dptr
+                     ; End Macro GETX
+                     
+000121: FD             mov   R5,a                    ;
+000122: A3             inc   dptr                     ;
+                       
+                     ; Begin Macro GETX
+000123: E0                   movx  a, @dptr
+                     ; End Macro GETX
+                     
+000124: FE             mov   R6,a                    ;
+000125: A3             inc   dptr                     ;
+                       
+                     ; Begin Macro GETX
+000126: E0                   movx  a, @dptr
+                     ; End Macro GETX
+                     
+000127: FF             mov   R7,a                    ;
+                       
+000128: E4             clr   a                        ; indicate "no exceptions"
+                     
+                     NM2_Exit:
+000129: 22             ret                            ;
+                     ;**********************************************************
+                     ;*
+                     ;* Function Name: Native_method3
+                     ;*
+                     ;*   Description: public static native long method3(void)
+                     ;*
+                     ;*      Input(s): None 
+                     ;*
+                     ;*    Outputs(s): A - zero on success, exception number on 
+                     ;*                returns a long in R7:R6:R5:R4:R3:R2:R1:R0
+                     ;*                
+                     ;*         Notes: Demonstrates indirect usage 
+                     ;*
+                     ;**********************************************************
+                     Native_method3:
+00012A: 78 F0          mov   R0,#0F0h
+00012C: D3             setb  c                        ; we will add 1 to our lon
+00012D: 75 F0 08       mov   b,#08h                    ;
+                     
+                     NM3_Loop:
+000130: E6             mov   a,@R0                   ; do the "long" increment
+000131: 34 00          addc  a,#00h                    ;
+000133: F6             mov   @R0,a                   ;
+000134: 08             inc   R0                       ;
+000135: D5 F0 F8       djnz  b,NM3_Loop              ;
+                       
+000138: 78 F0          mov   R0,#0F0h
+00013A: 86 F0          mov   b,@R0                   ; now load up the return va
+00013C: 08             inc   R0                       ;
+00013D: 86 01          mov   01h,@R0               ; 
+00013F: 08             inc   R0                       ;
+000140: 86 02          mov   02h,@R0               ; 
+000142: 08             inc   R0                       ;
+000143: 86 03          mov   03h,@R0               ; 
+000145: 08             inc   R0                       ;
+000146: 86 04          mov   04h,@R0               ; 
+000148: 08             inc   R0                       ;
+000149: 86 05          mov   05h,@R0               ; 
+00014B: 08             inc   R0                       ;
+00014C: 86 06          mov   06h,@R0               ; 
+00014E: 08             inc   R0                       ;
+00014F: 86 07          mov   07h,@R0               ; 
+000151: A8 F0          mov   R0,b                    ;
+                     
+000153: E4             clr   a                        ; no error
+                     
+                     NM3_Done:
+000154: 22             ret                            ;
+                      ;*********************************************************
+                     ;*
+                     ;* Function Name: Native_method4
+                     ;*
+                     ;*   Description: public static native int method4(int slee
+                     ;*
+                     ;*      Input(s): sleepTimeMillis on the Java Stack. 
+                     ;*
+                     ;*    Outputs(s): A - zero on success, exception number on 
+                     ;*                returns an int in R3:R2:R1:R0, msb:...:ls
+                     ;*                
+                     ;*         Notes: Demonstrates sleeping from a native metho
+                     ;*                returns the requested sleep time.
+                     ;*
+                     ;**********************************************************
+                     Native_method4:
+000155: E4             clr   a                        ;
+000156: 12 03 BA 66    lcall 03BA66h     ; load parameter
+                     
+00015A: 12 03 13 81    lcall 031381h
+                     
+00015E: C0 00          push  00h                    ; save timeout regs
+000160: C0 01          push  01h                    ;
+000162: C0 02          push  02h                    ;
+000164: C0 03          push  03h                    ;
+000166: E4             clr   a                        ; sleep, not suspend
+000167: 12 03 1C D1    lcall 031CD1h       ; go to sleep
+00016B: D0 03          pop   03h                    ; restore timeout regs
+00016D: D0 02          pop   02h                    ;
+00016F: D0 01          pop   01h                    ;
+000171: D0 00          pop   00h                    ;
+                     
+000173: 12 03 13 C9    lcall 0313C9h
+                     
+000177: E4             clr   a                        ; no error 
+000178: 22             ret                            ;
+                     ;**********************************************************
+                     ;*
+                     ;* Function Name: Process_Destroy_Function 
+                     ;*
+                     ;*   Description: Clean up process destroy and indirects 
+                     ;*
+                     ;*      Input(s): Acc - Id of the process that is being des
+                     ;*
+                     ;*    Outputs(s): None
+                     ;*                
+                     ;*         Notes: Called on application exit 
+                     ;*
+                     ;**********************************************************
+                     Process_Destroy_Function:
+000179: 12 01 7C 2E    lcall 017C2Eh            ; spew some debug
+00017D: 74 44          mov   a,#044h                  ;
+00017F: 12 01 7C 9F    lcall 017C9Fh            ;
+000183: 12 01 7C 2E    lcall 017C2Eh            ;
+                     
+                     ;
+                     ; to free the ISB, uncomment the 
+                     ; following... normally you use an
+                     ; ISB to maintain data across reboots
+                     ; so we really don't want to free this 
+                     ; here 
+                     ; 
+                     ;  mov   dptr, #LibraryID         ;
+                     ;  lcall NatLib_GetImmutableStateBlock
+                     ;  lcall mm_free                  ;
+                     ;  mov   dptr, #LibraryID         ;
+                     ;  lcall NatLib_RemoveImmutableStateBlock
+                     
+000187: 90 00 01 79    mov   dptr,#Process_Destroy_Function
+00018B: 12 01 1A 83    lcall 011A83h
+                     
+00018F: 12 03 BB 4A    lcall 03BB4Ah
+                     
+000193: 22             ret                            ;
+                     ;**********************************************************
+                     
+                     
+                     
+000194:              END
+
+
+Code Statistics (count):
+========================
+
+
+
+Module Statistics:             code bytes, lcalls,  ljmps, mov a, #0
+====================================================================
+                        example1:       0,     23,      4,      0
+                                  -----------------------------------
+                           Total:       0,     23,      4,      0
+
+
+Symbols (hex value: decimal value):
+================================
+                         NM1_GETNEXTPARAMS: 0x0000C8:      200
+               INIT_GETEPHEMERALSTATEBLOCK: 0x00002D:       45
+                                       ET0: 0x0000A9:      169
+                                       ET1: 0x0000AB:      171
+                                       ET2: 0x0000AD:      173
+                                         B: 0x0000F0:      240
+                                         P: 0x0000D0:      208
+                                       IT0: 0x000088:      136
+                                       IT1: 0x00008A:      138
+                                 INIT_LOOP: 0x00008B:      139
+               INIT_STORERETRIEVEEPHEMERAL: 0x000037:       55
+                                       RB8: 0x00009A:      154
+                                        AC: 0x0000D6:      214
+                                      TMOD: 0x000089:      137
+                             NM1_BUFFSETGO: 0x0000BC:      188
+                                  NM1_EXIT: 0x000102:      258
+                                       EX0: 0x0000A8:      168
+                                       EX1: 0x0000AA:      170
+                        NM1_HAVESTATEBLOCK: 0x0000E4:      228
+                                        CY: 0x0000D7:      215
+                                        F0: 0x0000D5:      213
+                                        EA: 0x0000AF:      175
+                                       REN: 0x00009C:      156
+                                      PCON: 0x000087:      135
+                                  NM1_LOOP: 0x0000BE:      190
+                                        ES: 0x0000AC:      172
+                  PROCESS_DESTROY_FUNCTION: 0x000179:      377
+                       INIT_CLEARINDIRECTS: 0x000085:      133
+                                 INIT_DONE: 0x000090:      144
+                                        IE: 0x0000A8:      168
+                                        IP: 0x0000B8:      184
+                                       RL2: 0x0000C8:      200
+               INIT_STORERETRIEVEIMMUTABLE: 0x00005E:       94
+                                      SBUF: 0x000099:      153
+                              NM1_TESTR1R0: 0x0000B2:      178
+                                      RCLK: 0x0000CD:      205
+                                     T2CON: 0x0000C8:      200
+                                      EXF2: 0x0000CE:      206
+                                  NM3_LOOP: 0x000130:      304
+                                        P0: 0x000080:      128
+                                        P1: 0x000090:      144
+                                        P2: 0x0000A0:      160
+                                        P3: 0x0000B0:      176
+                                        OV: 0x0000D2:      210
+                                        PS: 0x0000BC:      188
+                                       RS0: 0x0000D3:      211
+                                       RS1: 0x0000D4:      212
+                                        RI: 0x000098:      152
+                        INIT_TESTIMMUTABLE: 0x000054:       84
+                                     EXEN2: 0x0000CB:      203
+                                        SP: 0x000081:      129
+                                        TI: 0x000099:      153
+                        NM1_POINTERISVALID: 0x0000A4:      164
+              INIT_REGISTERDESTROYFUNCTION: 0x000019:       25
+                                      SCON: 0x000098:      152
+                                  NM3_DONE: 0x000154:      340
+                            NM1_TESTR2R1R0: 0x0000B7:      183
+                  INIT_HAVEENOUGHREGISTERS: 0x00000D:       13
+                            NATIVE_METHOD1: 0x000099:      153
+                            NATIVE_METHOD2: 0x000103:      259
+                            NATIVE_METHOD3: 0x00012A:      298
+                            NATIVE_METHOD4: 0x000155:      341
+                                      TCLK: 0x0000CC:      204
+                                       SM0: 0x00009F:      159
+                                       SM1: 0x00009E:      158
+                                       SM2: 0x00009D:      157
+                                      TCON: 0x000088:      136
+                                       TB8: 0x00009B:      155
+                                       TF0: 0x00008D:      141
+                                       TF1: 0x00008F:      143
+                                       TF2: 0x0000CF:      207
+                                  NM2_EXIT: 0x000129:      297
+                                       TH0: 0x00008C:      140
+                                       TH1: 0x00008D:      141
+                                       TH2: 0x0000CD:      205
+                        NM2_HAVESTATEBLOCK: 0x000111:      273
+                                 LIBRARYID: 0x000091:      145
+                                    RCAP2H: 0x0000CB:      203
+                                    RCAP2L: 0x0000CA:      202
+                                       DPH: 0x000083:      131
+                                       DPL: 0x000082:      130
+                                       TL0: 0x00008A:      138
+                                       TL1: 0x00008B:      139
+                                       TL2: 0x0000CC:      204
+                                       ACC: 0x0000E0:      224
+                        INIT_PERFORMMALLOC: 0x00006A:      106
+                                       IE0: 0x000089:      137
+                                       IE1: 0x00008B:      139
+                                       TR0: 0x00008C:      140
+                                       TR1: 0x00008E:      142
+                                       TR2: 0x0000CA:      202
+                                       PT0: 0x0000B9:      185
+                                       PT1: 0x0000BB:      187
+                                       PT2: 0x0000BD:      189
+                                       PSW: 0x0000D0:      208
+                                       PX0: 0x0000B8:      184
+                                       PX1: 0x0000BA:      186
+                             EXAMPLE1_INIT: 0x000000:        0
+                      INIT_MALLOCEPHEMERAL: 0x000039:       57
